@@ -1,0 +1,741 @@
+{
+  "policy": {
+    "organizationName": "Aurelia Bullion Finance Ltd.",
+    "maxLtvPercent": 75,
+    "goldRatesPerGram": {
+      "24K": 7480,
+      "22K": 6855,
+      "20K": 6230,
+      "18K": 5610
+    },
+    "interestRatesByScheme": {
+      "Monthly EMI": 10.75,
+      "Quarterly Interest": 11.25,
+      "Bullet Maturity": 11.75
+    },
+    "processingFeePercent": 0.5,
+    "valuationFeeFlat": 350,
+    "gstPercent": 18,
+    "allowedTenuresMonths": [
+      3,
+      6,
+      12,
+      18,
+      24
+    ]
+  },
+  "applications": [
+    {
+      "application": {
+        "id": "GL-2026-0841",
+        "applicationNumber": "AVGL-MUM04-0841",
+        "branchCode": "MUM-04",
+        "branchName": "Mumbai — Bandra West Branch",
+        "status": "Disbursed",
+        "createdAt": "2026-11-15T09:20:00.000Z",
+        "updatedAt": "2026-11-18T02:34:23.588Z",
+        "createdById": "staff-01",
+        "createdByName": "Priya Sharma",
+        "customer": {
+          "fullName": "Ananya Deshpande",
+          "phone": "+91 98204 51923",
+          "dateOfBirth": "1988-04-14",
+          "address": "402 Sea Breeze Apartments, Chapel Road, Bandra West, Mumbai 400050",
+          "panNumber": "BHAPD4821K",
+          "aadhaarMasked": "XXXX-XXXX-7392",
+          "aadhaarLast4": "7392",
+          "consentCaptured": true,
+          "consentTimestamp": "2026-11-15T09:20:00.000Z",
+          "ocrDisclaimerAcknowledged": true
+        },
+        "kycDocuments": [
+          {
+            "id": "doc-1a",
+            "docCategory": "PAN",
+            "fileName": "ananya_pan_scan.jpg",
+            "ocrAssisted": true,
+            "ocrExtractedSummary": "Name: Ananya Deshpande · PAN: BHAPD4821K · DOB: 1988-04-14",
+            "uploadedAt": "2026-11-15T09:20:00.000Z",
+            "mimeType": "image/svg+xml",
+            "previewDataUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22520%22%20height%3D%22290%22%20viewBox%3D%220%200%20520%20290%22%3E%0A%20%20%20%20%3Crect%20width%3D%22520%22%20height%3D%22290%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20stroke%3D%22%23cbd5e1%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22520%22%20height%3D%2254%22%20rx%3D%2210%22%20fill%3D%22%230f172a%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%2240%22%20width%3D%22520%22%20height%3D%2214%22%20fill%3D%22%230f172a%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2233%22%20font-family%3D%22system-ui%2C%20-apple-system%2C%20sans-serif%22%20font-size%3D%2215%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EINCOME%20TAX%20DEPARTMENT%20%C2%B7%20PAN%20CARD%20SCAN%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%22372%22%20y%3D%2215%22%20width%3D%22128%22%20height%3D%2224%22%20rx%3D%224%22%20fill%3D%22%23b45309%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%22436%22%20y%3D%2231%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%3EINTAKE%20RECORD%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2296%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EName%20%20%20%20%20%20%20%3A%20ANANYA%20DESHPANDE%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22120%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EPAN%20Number%20%3A%20BHAPD4821K%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22144%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EDOB%20%20%20%20%20%20%20%20%3A%2014%2F04%2F1988%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22168%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EStatus%20%20%20%20%20%3A%20Individual%20%C2%B7%20Physical%20Original%20Sighted%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%2224%22%20y%3D%22230%22%20width%3D%22472%22%20height%3D%2238%22%20rx%3D%226%22%20fill%3D%22%23f8fafc%22%20stroke%3D%22%23e2e8f0%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2236%22%20y%3D%22253%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2211%22%20fill%3D%22%23475569%22%3EUploaded%20at%20branch%20intake%20%C2%B7%20Verified%20against%20physical%20PAN%20card%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E"
+          },
+          {
+            "id": "doc-1b",
+            "docCategory": "Aadhaar Front",
+            "fileName": "ananya_aadhaar_masked.jpg",
+            "ocrAssisted": true,
+            "ocrExtractedSummary": "Masked Aadhaar: XXXX-XXXX-7392 · Bandra West, Mumbai",
+            "uploadedAt": "2026-11-15T09:20:00.000Z",
+            "mimeType": "image/svg+xml",
+            "previewDataUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22520%22%20height%3D%22290%22%20viewBox%3D%220%200%20520%20290%22%3E%0A%20%20%20%20%3Crect%20width%3D%22520%22%20height%3D%22290%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20stroke%3D%22%23cbd5e1%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22520%22%20height%3D%2254%22%20rx%3D%2210%22%20fill%3D%22%231e293b%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%2240%22%20width%3D%22520%22%20height%3D%2214%22%20fill%3D%22%231e293b%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2233%22%20font-family%3D%22system-ui%2C%20-apple-system%2C%20sans-serif%22%20font-size%3D%2215%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EAADHAAR%20CARD%20(AUTO-MASKED%20COPY)%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%22372%22%20y%3D%2215%22%20width%3D%22128%22%20height%3D%2224%22%20rx%3D%224%22%20fill%3D%22%23047857%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%22436%22%20y%3D%2231%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%3EINTAKE%20RECORD%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2296%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EName%20%20%20%20%20%20%20%3A%20Ananya%20Deshpande%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22120%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EAadhaar%20%20%20%20%3A%20XXXX-XXXX-7392%20(Last%204%20digits%20retained)%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22144%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EAddress%20%20%20%20%3A%20402%20Sea%20Breeze%20Apts%2C%20Bandra%20West%2C%20Mumbai%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22168%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EConsent%20%20%20%20%3A%20Customer%20e-KYC%20%26amp%3B%20storage%20consent%20captured%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%2224%22%20y%3D%22230%22%20width%3D%22472%22%20height%3D%2238%22%20rx%3D%226%22%20fill%3D%22%23f8fafc%22%20stroke%3D%22%23e2e8f0%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2236%22%20y%3D%22253%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2211%22%20fill%3D%22%23475569%22%3EFull%2012-digit%20Aadhaar%20redacted%20per%20regulatory%20data%20safeguards%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E"
+          }
+        ],
+        "kycDecision": "Approved",
+        "kycReviewHistory": [
+          {
+            "id": "kyc-1",
+            "decision": "Approved",
+            "remarks": "Original PAN and masked Aadhaar verified against physical presentation. Address matches electricity utility record.",
+            "reviewedById": "admin-01",
+            "reviewedByName": "Vikramaditya Nair",
+            "reviewedAt": "2026-11-15T10:05:00.000Z"
+          }
+        ],
+        "goldItems": [
+          {
+            "id": "itm-101",
+            "itemType": "Necklace",
+            "quantity": 1,
+            "customerDescription": "Traditional 22K bridal temple choker necklace with small Kemp stone accents",
+            "livePhotoDataUrl": "/src/assets/images/ornament_gold_necklace_1794929672496.jpg",
+            "purchaseBillAvailable": true,
+            "purchaseBillRef": "TBZ-MUM-2022-9104",
+            "grossWeightGrams": 42.6,
+            "stoneDetails": "Red & green Kemp synthetic stones in central pendant",
+            "stoneDeductionGrams": 3.1,
+            "netWeightGrams": 39.5,
+            "purity": "22K",
+            "ratePerGram": 6855,
+            "appraisedValue": 270773,
+            "appraiserNotes": "916 BIS hallmark verified under 10x loupe. XRF scan avg 91.7%."
+          },
+          {
+            "id": "itm-102",
+            "itemType": "Bangle",
+            "quantity": 2,
+            "customerDescription": "Pair of solid 22K carved floral kada bangles",
+            "livePhotoDataUrl": "/src/assets/images/ornament_gold_bangles_1794929672762.jpg",
+            "purchaseBillAvailable": false,
+            "grossWeightGrams": 20.7,
+            "stoneDetails": "No stones — solid metal",
+            "stoneDeductionGrams": 0,
+            "netWeightGrams": 20.7,
+            "purity": "22K",
+            "ratePerGram": 6855,
+            "appraisedValue": 141898,
+            "appraiserNotes": "Clean acid test & ultrasonic density check passed."
+          }
+        ],
+        "appraisalHistory": [
+          {
+            "id": "apr-1",
+            "appraisedAt": "2026-11-15T11:30:00.000Z",
+            "appraiserId": "appraiser-01",
+            "appraiserName": "Rajesh Kulkarni",
+            "totalGrossWeightGrams": 63.3,
+            "totalNetWeightGrams": 60.2,
+            "totalAppraisedValue": 412671,
+            "remarks": "2 items appraised using XRF + touchstone verification. Total net 22K weight 60.20g.",
+            "itemSnapshots": [
+              {
+                "itemId": "itm-101",
+                "itemType": "Necklace",
+                "grossWeightGrams": 42.6,
+                "netWeightGrams": 39.5,
+                "purity": "22K",
+                "appraisedValue": 270773
+              },
+              {
+                "itemId": "itm-102",
+                "itemType": "Bangle",
+                "grossWeightGrams": 20.7,
+                "netWeightGrams": 20.7,
+                "purity": "22K",
+                "appraisedValue": 141898
+              }
+            ]
+          }
+        ],
+        "loanOffer": {
+          "policyLtvPercent": 75,
+          "maxEligibleAmount": 309503,
+          "requestedAmount": 280000,
+          "sanctionedAmount": 280000,
+          "tenureMonths": 12,
+          "annualInterestRate": 10.75,
+          "repaymentScheme": "Monthly EMI",
+          "processingFeeAmount": 1400,
+          "valuationFeeAmount": 350,
+          "gstOnFeesAmount": 315,
+          "netDisbursementAmount": 277935,
+          "monthlyInstallment": 24714,
+          "totalInterestPayable": 16570,
+          "totalRepayableAmount": 296570,
+          "calculatedAt": "2026-11-17T15:43:16.067Z"
+        },
+        "collateralStorage": {
+          "packageSealNumber": "SEAL-MUM04-88412",
+          "vaultLocation": "Vault A · Dual-Key Rack 02",
+          "storageBoxNumber": "BOX-A2-14",
+          "handedOverById": "appraiser-01",
+          "handedOverByName": "Rajesh Kulkarni",
+          "receivedById": "admin-01",
+          "receivedByName": "Vikramaditya Nair",
+          "handoverTimestamp": "2026-11-16T08:45:00.000Z",
+          "custodyLog": [
+            {
+              "id": "cus-1",
+              "timestamp": "2026-11-16T08:45:00.000Z",
+              "event": "Sealed & Vaulted",
+              "actorName": "Vikramaditya Nair",
+              "actorRole": "BRANCH_ADMIN",
+              "notes": "Tamper-evident pouch SEAL-MUM04-88412 verified by dual custodians and placed in BOX-A2-14."
+            }
+          ]
+        },
+        "sanctionSigning": {
+          "sanctionLetterNumber": "SL-2026-MUM04-0841",
+          "generatedAt": "2026-11-16T08:45:00.000Z",
+          "customerSigned": true,
+          "customerSignedAt": "2026-11-16T08:45:00.000Z",
+          "branchRepSigned": true,
+          "branchRepId": "admin-01",
+          "branchRepName": "Vikramaditya Nair",
+          "branchRepSignedAt": "2026-11-16T08:45:00.000Z",
+          "customerSignatureDataUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22320%22%20height%3D%2288%22%20viewBox%3D%220%200%20320%2088%22%3E%3Crect%20width%3D%22320%22%20height%3D%2288%22%20fill%3D%22%23ffffff%22%2F%3E%3Cpath%20d%3D%22M26%2056%20C44%2022%2C%2062%2066%2C%2084%2042%20C102%2022%2C%20114%2062%2C%20140%2044%20C162%2028%2C%20186%2058%2C%20214%2040%20C236%2026%2C%20260%2052%2C%20294%2038%22%20fill%3D%22none%22%20stroke%3D%22%230f172a%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%2F%3E%3Ctext%20x%3D%22160%22%20y%3D%2276%22%20font-family%3D%22Georgia%2C%20serif%22%20font-style%3D%22italic%22%20font-size%3D%2211%22%20fill%3D%22%23475569%22%20text-anchor%3D%22middle%22%3EAnanya%20Deshpande%3C%2Ftext%3E%3C%2Fsvg%3E",
+          "branchRepSignatureDataUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22320%22%20height%3D%2288%22%20viewBox%3D%220%200%20320%2088%22%3E%3Crect%20width%3D%22320%22%20height%3D%2288%22%20fill%3D%22%23ffffff%22%2F%3E%3Cpath%20d%3D%22M24%2038%20L52%2060%20L82%2024%20C98%2048%2C%20122%2054%2C%20146%2036%20C168%2020%2C%20182%2058%2C%20212%2042%20C238%2028%2C%20258%2048%2C%20292%2034%22%20fill%3D%22none%22%20stroke%3D%22%230f172a%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3Ctext%20x%3D%22160%22%20y%3D%2276%22%20font-family%3D%22Georgia%2C%20serif%22%20font-style%3D%22italic%22%20font-size%3D%2211%22%20fill%3D%22%23475569%22%20text-anchor%3D%22middle%22%3EVikramaditya%20Nair%20%C2%B7%20Branch%20Admin%3C%2Ftext%3E%3C%2Fsvg%3E"
+        },
+        "bankAccount": {
+          "accountHolderName": "Ananya Deshpande",
+          "bankName": "HDFC Bank Ltd.",
+          "ifscCode": "HDFC0000142",
+          "accountNumberMasked": "XXXX-XXXX-6619",
+          "accountNumberLast4": "6619",
+          "verificationStatus": "Verified",
+          "verifiedAt": "2026-11-16T14:15:00.000Z",
+          "verifiedByName": "Vikramaditya Nair"
+        },
+        "disbursement": {
+          "status": "Disbursed",
+          "utrReference": "HDFCR52026111600984122",
+          "disbursedAmount": 277935,
+          "disbursedAt": "2026-11-16T14:15:00.000Z",
+          "disbursedById": "admin-01",
+          "disbursedByName": "Vikramaditya Nair",
+          "remarks": "NEFT/RTGS credit confirmed to verified HDFC account ending 6619."
+        },
+        "encryptionMetadata": {
+          "encryptedFields": [
+            "panNumber",
+            "bankAccountNumber",
+            "aadhaarVerificationHash"
+          ],
+          "algorithm": "AES-256-GCM",
+          "aadhaarStoredFull": false
+        },
+        "repayments": [
+          {
+            "id": "rcpt-0841-1",
+            "receiptNumber": "RCPT-0841-01",
+            "installmentNumber": 1,
+            "paidAt": "2026-11-17T02:34:23.499Z",
+            "principalPaid": 22206,
+            "interestPaid": 2508,
+            "totalPaid": 24714,
+            "paymentMode": "UPI",
+            "transactionRef": "UPI632089114201",
+            "collectedByName": "Priya Sharma"
+          },
+          {
+            "id": "rcpt-0841-2",
+            "receiptNumber": "RCPT-0841-02",
+            "installmentNumber": 2,
+            "paidAt": "2026-11-18T02:34:23.499Z",
+            "principalPaid": 22405,
+            "interestPaid": 2309,
+            "totalPaid": 24714,
+            "paymentMode": "Auto-Debit",
+            "transactionRef": "NACH202611170841",
+            "collectedByName": "Vikramaditya Nair"
+          },
+          {
+            "id": "rcpt-193921",
+            "receiptNumber": "RCPT-0841-03",
+            "installmentNumber": 3,
+            "paidAt": "2026-11-18T02:34:23.576Z",
+            "principalPaid": 22605,
+            "interestPaid": 2109,
+            "totalPaid": 24714,
+            "paymentMode": "UPI",
+            "transactionRef": "UPI69263576",
+            "collectedByName": "Self-Service Portal"
+          }
+        ]
+      },
+      "encryptedPan": "87662a19627fed20d739cc6f:4ef54cb76f064c820e58df153a898cd5:d8803820b223c047e2ad",
+      "encryptedAccountNumber": "b9a6ed7a32856c656c827afb:8e2a7e543c83241765ee770cc2a3077c:cde03b93ebc5aa8206ccdb04daca",
+      "aadhaarVerificationHash": "ca2989487e8695a5e749d98a9bfdb7ff8bc7bba4ada83b6d6010012456d50262"
+    },
+    {
+      "application": {
+        "id": "GL-2026-0842",
+        "applicationNumber": "AVGL-MUM04-0842",
+        "branchCode": "MUM-04",
+        "branchName": "Mumbai — Bandra West Branch",
+        "status": "Loan Offer Ready",
+        "createdAt": "2026-11-15T11:30:00.000Z",
+        "updatedAt": "2026-11-16T14:15:00.000Z",
+        "createdById": "staff-01",
+        "createdByName": "Priya Sharma",
+        "customer": {
+          "fullName": "Rohan Malhotra",
+          "phone": "+91 98192 33041",
+          "dateOfBirth": "1991-09-22",
+          "address": "14B Pali Hill Residency, Bandra West, Mumbai 400050",
+          "panNumber": "CRMPM7712R",
+          "aadhaarMasked": "XXXX-XXXX-2048",
+          "aadhaarLast4": "2048",
+          "consentCaptured": true,
+          "consentTimestamp": "2026-11-15T11:30:00.000Z",
+          "ocrDisclaimerAcknowledged": true
+        },
+        "kycDocuments": [
+          {
+            "id": "doc-2a",
+            "docCategory": "PAN",
+            "fileName": "rohan_pan.jpg",
+            "ocrAssisted": true,
+            "ocrExtractedSummary": "Name: Rohan Malhotra · PAN: CRMPM7712R",
+            "uploadedAt": "2026-11-15T11:30:00.000Z",
+            "mimeType": "image/svg+xml",
+            "previewDataUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22520%22%20height%3D%22290%22%20viewBox%3D%220%200%20520%20290%22%3E%0A%20%20%20%20%3Crect%20width%3D%22520%22%20height%3D%22290%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20stroke%3D%22%23cbd5e1%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22520%22%20height%3D%2254%22%20rx%3D%2210%22%20fill%3D%22%230f172a%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%2240%22%20width%3D%22520%22%20height%3D%2214%22%20fill%3D%22%230f172a%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2233%22%20font-family%3D%22system-ui%2C%20-apple-system%2C%20sans-serif%22%20font-size%3D%2215%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EINCOME%20TAX%20DEPARTMENT%20%C2%B7%20PAN%20CARD%20SCAN%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%22372%22%20y%3D%2215%22%20width%3D%22128%22%20height%3D%2224%22%20rx%3D%224%22%20fill%3D%22%23b45309%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%22436%22%20y%3D%2231%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%3EINTAKE%20RECORD%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2296%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EName%20%20%20%20%20%20%20%3A%20ROHAN%20MALHOTRA%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22120%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EPAN%20Number%20%3A%20CRMPM7712R%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22144%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EDOB%20%20%20%20%20%20%20%20%3A%2022%2F09%2F1991%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22168%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EStatus%20%20%20%20%20%3A%20Individual%20%C2%B7%20Verified%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%2224%22%20y%3D%22230%22%20width%3D%22472%22%20height%3D%2238%22%20rx%3D%226%22%20fill%3D%22%23f8fafc%22%20stroke%3D%22%23e2e8f0%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2236%22%20y%3D%22253%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2211%22%20fill%3D%22%23475569%22%3EOCR%20entry-aid%20match%20%C2%B7%20Physical%20original%20sighted%20by%20Branch%20Admin%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E"
+          },
+          {
+            "id": "doc-2b",
+            "docCategory": "Aadhaar Front",
+            "fileName": "rohan_aadhaar_front.jpg",
+            "ocrAssisted": false,
+            "uploadedAt": "2026-11-15T11:30:00.000Z",
+            "mimeType": "image/svg+xml",
+            "previewDataUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22520%22%20height%3D%22290%22%20viewBox%3D%220%200%20520%20290%22%3E%0A%20%20%20%20%3Crect%20width%3D%22520%22%20height%3D%22290%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20stroke%3D%22%23cbd5e1%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22520%22%20height%3D%2254%22%20rx%3D%2210%22%20fill%3D%22%231e293b%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%2240%22%20width%3D%22520%22%20height%3D%2214%22%20fill%3D%22%231e293b%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2233%22%20font-family%3D%22system-ui%2C%20-apple-system%2C%20sans-serif%22%20font-size%3D%2215%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EAADHAAR%20CARD%20(AUTO-MASKED%20COPY)%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%22372%22%20y%3D%2215%22%20width%3D%22128%22%20height%3D%2224%22%20rx%3D%224%22%20fill%3D%22%23047857%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%22436%22%20y%3D%2231%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%3EINTAKE%20RECORD%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2296%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EName%20%20%20%20%20%20%20%3A%20Rohan%20Malhotra%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22120%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EAadhaar%20%20%20%20%3A%20XXXX-XXXX-2048%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22144%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EAddress%20%20%20%20%3A%2014B%20Pali%20Hill%20Residency%2C%20Bandra%20West%2C%20Mumbai%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22168%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EMatch%20%20%20%20%20%20%3A%20Name%20%26amp%3B%20address%20match%20intake%20form%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%2224%22%20y%3D%22230%22%20width%3D%22472%22%20height%3D%2238%22%20rx%3D%226%22%20fill%3D%22%23f8fafc%22%20stroke%3D%22%23e2e8f0%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2236%22%20y%3D%22253%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2211%22%20fill%3D%22%23475569%22%3EMasked%20copy%20retained%20for%20branch%20compliance%20file%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E"
+          }
+        ],
+        "kycDecision": "Approved",
+        "kycReviewHistory": [
+          {
+            "id": "kyc-2",
+            "decision": "Approved",
+            "remarks": "KYC documents verified in person.",
+            "reviewedById": "admin-01",
+            "reviewedByName": "Vikramaditya Nair",
+            "reviewedAt": "2026-11-16T08:45:00.000Z"
+          }
+        ],
+        "goldItems": [
+          {
+            "id": "itm-201",
+            "itemType": "Bangle",
+            "quantity": 2,
+            "customerDescription": "Pair of 22K solid gold family heirloom bangles",
+            "livePhotoDataUrl": "/src/assets/images/ornament_gold_bangles_1794929672762.jpg",
+            "purchaseBillAvailable": true,
+            "purchaseBillRef": "KALYAN-2020-3321",
+            "grossWeightGrams": 27,
+            "stoneDetails": "None",
+            "stoneDeductionGrams": 0,
+            "netWeightGrams": 27,
+            "purity": "22K",
+            "ratePerGram": 6855,
+            "appraisedValue": 185085,
+            "appraiserNotes": "22K 916 verified. Uniform density."
+          }
+        ],
+        "appraisalHistory": [
+          {
+            "id": "apr-2",
+            "appraisedAt": "2026-11-16T14:15:00.000Z",
+            "appraiserId": "appraiser-01",
+            "appraiserName": "Rajesh Kulkarni",
+            "totalGrossWeightGrams": 27,
+            "totalNetWeightGrams": 27,
+            "totalAppraisedValue": 185085,
+            "remarks": "Completed primary bullion evaluation.",
+            "itemSnapshots": [
+              {
+                "itemId": "itm-201",
+                "itemType": "Bangle",
+                "grossWeightGrams": 27,
+                "netWeightGrams": 27,
+                "purity": "22K",
+                "appraisedValue": 185085
+              }
+            ]
+          }
+        ],
+        "loanOffer": {
+          "policyLtvPercent": 75,
+          "maxEligibleAmount": 138813,
+          "requestedAmount": 130000,
+          "sanctionedAmount": 130000,
+          "tenureMonths": 6,
+          "annualInterestRate": 11.75,
+          "repaymentScheme": "Bullet Maturity",
+          "processingFeeAmount": 650,
+          "valuationFeeAmount": 350,
+          "gstOnFeesAmount": 180,
+          "netDisbursementAmount": 128820,
+          "monthlyInstallment": 1273,
+          "totalInterestPayable": 7638,
+          "totalRepayableAmount": 137638,
+          "calculatedAt": "2026-11-17T15:43:16.067Z"
+        },
+        "bankAccount": {
+          "accountHolderName": "Rohan Malhotra",
+          "bankName": "ICICI Bank",
+          "ifscCode": "ICIC0000391",
+          "accountNumberMasked": "XXXX-XXXX-8114",
+          "accountNumberLast4": "8114",
+          "verificationStatus": "Unverified"
+        },
+        "disbursement": {
+          "status": "Not Initiated"
+        },
+        "encryptionMetadata": {
+          "encryptedFields": [
+            "panNumber",
+            "bankAccountNumber",
+            "aadhaarVerificationHash"
+          ],
+          "algorithm": "AES-256-GCM",
+          "aadhaarStoredFull": false
+        },
+        "repayments": []
+      },
+      "encryptedPan": "0585120838d63afcc110340b:99c3e97ef7bc57c1d805f41a6b591acc:61cbed26c991ccea5222",
+      "encryptedAccountNumber": "50c3d0691f06c58a678830a9:3e1609411b092fc0119205f99569caff:15724c0f7833faf63f0bdddb",
+      "aadhaarVerificationHash": "afb712792ca9a9df8f36b3f75352ebbb0913fa69259a277c440ade8cd98fd3f5"
+    },
+    {
+      "application": {
+        "id": "GL-2026-0843",
+        "applicationNumber": "AVGL-MUM04-0843",
+        "branchCode": "MUM-04",
+        "branchName": "Mumbai — Bandra West Branch",
+        "status": "Appraisal Pending",
+        "createdAt": "2026-11-16T14:15:00.000Z",
+        "updatedAt": "2026-11-17T06:30:00.000Z",
+        "createdById": "staff-01",
+        "createdByName": "Priya Sharma",
+        "customer": {
+          "fullName": "Siddharth Joshi",
+          "phone": "+91 98210 74512",
+          "dateOfBirth": "1985-11-03",
+          "address": "901 Silver Arch, Hill Road, Bandra West, Mumbai 400050",
+          "panNumber": "ABCPJ6190M",
+          "aadhaarMasked": "XXXX-XXXX-5518",
+          "aadhaarLast4": "5518",
+          "consentCaptured": true,
+          "consentTimestamp": "2026-11-16T14:15:00.000Z",
+          "ocrDisclaimerAcknowledged": true
+        },
+        "kycDocuments": [
+          {
+            "id": "doc-3a",
+            "docCategory": "PAN",
+            "fileName": "siddharth_pan.jpg",
+            "ocrAssisted": true,
+            "ocrExtractedSummary": "Name: Siddharth Joshi · PAN: ABCPJ6190M",
+            "uploadedAt": "2026-11-16T14:15:00.000Z",
+            "mimeType": "image/svg+xml",
+            "previewDataUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22520%22%20height%3D%22290%22%20viewBox%3D%220%200%20520%20290%22%3E%0A%20%20%20%20%3Crect%20width%3D%22520%22%20height%3D%22290%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20stroke%3D%22%23cbd5e1%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22520%22%20height%3D%2254%22%20rx%3D%2210%22%20fill%3D%22%230f172a%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%2240%22%20width%3D%22520%22%20height%3D%2214%22%20fill%3D%22%230f172a%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2233%22%20font-family%3D%22system-ui%2C%20-apple-system%2C%20sans-serif%22%20font-size%3D%2215%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EINCOME%20TAX%20DEPARTMENT%20%C2%B7%20PAN%20CARD%20SCAN%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%22372%22%20y%3D%2215%22%20width%3D%22128%22%20height%3D%2224%22%20rx%3D%224%22%20fill%3D%22%23b45309%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%22436%22%20y%3D%2231%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%3EINTAKE%20RECORD%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2296%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EName%20%20%20%20%20%20%20%3A%20SIDDHARTH%20JOSHI%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22120%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EPAN%20Number%20%3A%20ABCPJ6190M%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22144%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EDOB%20%20%20%20%20%20%20%20%3A%2003%2F11%2F1985%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22168%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EAadhaar%20%20%20%20%3A%20XXXX-XXXX-5518%20(Masked)%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%2224%22%20y%3D%22230%22%20width%3D%22472%22%20height%3D%2238%22%20rx%3D%226%22%20fill%3D%22%23f8fafc%22%20stroke%3D%22%23e2e8f0%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2236%22%20y%3D%22253%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2211%22%20fill%3D%22%23475569%22%3EUploaded%20during%20intake%20%C2%B7%20KYC%20approved%20by%20Branch%20Admin%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E"
+          }
+        ],
+        "kycDecision": "Approved",
+        "kycReviewHistory": [
+          {
+            "id": "kyc-3",
+            "decision": "Approved",
+            "remarks": "KYC verified; routed to bullion appraisal desk.",
+            "reviewedById": "admin-01",
+            "reviewedByName": "Vikramaditya Nair",
+            "reviewedAt": "2026-11-17T06:30:00.000Z"
+          }
+        ],
+        "goldItems": [
+          {
+            "id": "itm-301",
+            "itemType": "Ring",
+            "quantity": 1,
+            "customerDescription": "Heavy 22K men’s signet ring with 916 hallmark inside band",
+            "livePhotoDataUrl": "/src/assets/images/ornament_gold_ring_1794929675362.jpg",
+            "purchaseBillAvailable": false
+          },
+          {
+            "id": "itm-302",
+            "itemType": "Necklace",
+            "quantity": 1,
+            "customerDescription": "Traditional gold necklace brought for short-term working capital pledge",
+            "livePhotoDataUrl": "/src/assets/images/ornament_gold_necklace_1794929672496.jpg",
+            "purchaseBillAvailable": true,
+            "purchaseBillRef": "PN-GADGIL-2023-114"
+          }
+        ],
+        "appraisalHistory": [],
+        "bankAccount": {
+          "accountHolderName": "Siddharth Joshi",
+          "bankName": "State Bank of India",
+          "ifscCode": "SBIN0001824",
+          "accountNumberMasked": "XXXX-XXXX-3902",
+          "accountNumberLast4": "3902",
+          "verificationStatus": "Unverified"
+        },
+        "disbursement": {
+          "status": "Not Initiated"
+        },
+        "encryptionMetadata": {
+          "encryptedFields": [
+            "panNumber",
+            "bankAccountNumber",
+            "aadhaarVerificationHash"
+          ],
+          "algorithm": "AES-256-GCM",
+          "aadhaarStoredFull": false
+        },
+        "repayments": []
+      },
+      "encryptedPan": "8a62c26c7fad7ee279bc21c8:44f96964873c8e4eba8ee8183d5cbc26:55c3f0b4e0db6dcfee71",
+      "encryptedAccountNumber": "562a46dc3f0b37841a293ad1:ac1a10e6bd74f74b1a4325e4092008d5:7b905622919812cc662f808a",
+      "aadhaarVerificationHash": "d748519bda5a4e67c522689d3ba74c29ff2202c5615ff711b660a8dcb12e11dc"
+    },
+    {
+      "application": {
+        "id": "GL-2026-0844",
+        "applicationNumber": "AVGL-MUM04-0844",
+        "branchCode": "MUM-04",
+        "branchName": "Mumbai — Bandra West Branch",
+        "status": "KYC Pending",
+        "createdAt": "2026-11-17T06:30:00.000Z",
+        "updatedAt": "2026-11-17T06:30:00.000Z",
+        "createdById": "staff-01",
+        "createdByName": "Priya Sharma",
+        "customer": {
+          "fullName": "Kavita Iyer",
+          "phone": "+91 97691 88402",
+          "dateOfBirth": "1979-06-28",
+          "address": "22 Carter Road CHS, Khar West, Mumbai 400052",
+          "panNumber": "AAAPI3042N",
+          "aadhaarMasked": "XXXX-XXXX-9104",
+          "aadhaarLast4": "9104",
+          "consentCaptured": true,
+          "consentTimestamp": "2026-11-17T06:30:00.000Z",
+          "ocrDisclaimerAcknowledged": true
+        },
+        "kycDocuments": [
+          {
+            "id": "doc-4a",
+            "docCategory": "PAN",
+            "fileName": "kavita_pan_ocr.jpg",
+            "ocrAssisted": true,
+            "ocrExtractedSummary": "Name: Kavita Iyer · PAN: AAAPI3042N",
+            "uploadedAt": "2026-11-17T06:30:00.000Z",
+            "mimeType": "image/svg+xml",
+            "previewDataUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22520%22%20height%3D%22290%22%20viewBox%3D%220%200%20520%20290%22%3E%0A%20%20%20%20%3Crect%20width%3D%22520%22%20height%3D%22290%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20stroke%3D%22%23cbd5e1%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22520%22%20height%3D%2254%22%20rx%3D%2210%22%20fill%3D%22%230f172a%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%2240%22%20width%3D%22520%22%20height%3D%2214%22%20fill%3D%22%230f172a%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2233%22%20font-family%3D%22system-ui%2C%20-apple-system%2C%20sans-serif%22%20font-size%3D%2215%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EINCOME%20TAX%20DEPARTMENT%20%C2%B7%20PAN%20CARD%20SCAN%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%22372%22%20y%3D%2215%22%20width%3D%22128%22%20height%3D%2224%22%20rx%3D%224%22%20fill%3D%22%23d97706%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%22436%22%20y%3D%2231%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%3EINTAKE%20RECORD%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2296%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EName%20%20%20%20%20%20%20%3A%20KAVITA%20IYER%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22120%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EPAN%20Number%20%3A%20AAAPI3042N%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22144%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EDOB%20%20%20%20%20%20%20%20%3A%2028%2F06%2F1979%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22168%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EOCR%20Note%20%20%20%3A%20Name%20%26amp%3B%20PAN%20extracted%20via%20OCR%20%C2%B7%20Awaiting%20Admin%20Check%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%2224%22%20y%3D%22230%22%20width%3D%22472%22%20height%3D%2238%22%20rx%3D%226%22%20fill%3D%22%23f8fafc%22%20stroke%3D%22%23e2e8f0%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2236%22%20y%3D%22253%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2211%22%20fill%3D%22%23475569%22%3EPending%20Branch%20Administrator%20physical%20verification%20%26%20decision%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E"
+          },
+          {
+            "id": "doc-4b",
+            "docCategory": "Address Proof",
+            "fileName": "kavita_utility_bill.pdf",
+            "ocrAssisted": false,
+            "uploadedAt": "2026-11-17T06:30:00.000Z",
+            "mimeType": "image/svg+xml",
+            "previewDataUrl": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22520%22%20height%3D%22290%22%20viewBox%3D%220%200%20520%20290%22%3E%0A%20%20%20%20%3Crect%20width%3D%22520%22%20height%3D%22290%22%20rx%3D%2210%22%20fill%3D%22%23ffffff%22%20stroke%3D%22%23cbd5e1%22%20stroke-width%3D%222%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%22520%22%20height%3D%2254%22%20rx%3D%2210%22%20fill%3D%22%23334155%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%220%22%20y%3D%2240%22%20width%3D%22520%22%20height%3D%2214%22%20fill%3D%22%23334155%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2233%22%20font-family%3D%22system-ui%2C%20-apple-system%2C%20sans-serif%22%20font-size%3D%2215%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%3EADDRESS%20PROOF%20%C2%B7%20ELECTRICITY%20UTILITY%20BILL%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%22372%22%20y%3D%2215%22%20width%3D%22128%22%20height%3D%2224%22%20rx%3D%224%22%20fill%3D%22%23d97706%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%22436%22%20y%3D%2231%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2210%22%20font-weight%3D%22700%22%20fill%3D%22%23ffffff%22%20text-anchor%3D%22middle%22%3EINTAKE%20RECORD%3C%2Ftext%3E%0A%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2296%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EConsumer%20%20%20%3A%20KAVITA%20IYER%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22120%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EAddress%20%20%20%20%3A%2022%20Carter%20Road%20CHS%2C%20Khar%20West%2C%20Mumbai%20400052%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22144%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EBill%20Cycle%20%3A%20Oct%202026%20%C2%B7%20Tata%20Power%20Mumbai%3C%2Ftext%3E%3Ctext%20x%3D%2224%22%20y%3D%22168%22%20font-family%3D%22ui-monospace%2C%20SFMono-Regular%2C%20Menlo%2C%20monospace%22%20font-size%3D%2213%22%20fill%3D%22%230f172a%22%3EStatus%20%20%20%20%20%3A%20Attached%20at%20customer%20intake%20for%20KYC%20verification%3C%2Ftext%3E%0A%20%20%20%20%3Crect%20x%3D%2224%22%20y%3D%22230%22%20width%3D%22472%22%20height%3D%2238%22%20rx%3D%226%22%20fill%3D%22%23f8fafc%22%20stroke%3D%22%23e2e8f0%22%2F%3E%0A%20%20%20%20%3Ctext%20x%3D%2236%22%20y%3D%22253%22%20font-family%3D%22system-ui%2C%20sans-serif%22%20font-size%3D%2211%22%20fill%3D%22%23475569%22%3EPending%20Branch%20Administrator%20review%20%C2%B7%20Original%20bill%20sighted%20at%20desk%3C%2Ftext%3E%0A%20%20%3C%2Fsvg%3E"
+          }
+        ],
+        "kycDecision": "Pending",
+        "kycReviewHistory": [],
+        "goldItems": [
+          {
+            "id": "itm-401",
+            "itemType": "Ring",
+            "quantity": 1,
+            "customerDescription": "22K solid gold signet ring",
+            "livePhotoDataUrl": "/src/assets/images/ornament_gold_ring_1794929675362.jpg",
+            "purchaseBillAvailable": true,
+            "purchaseBillRef": "TANISHQ-2021-4091"
+          }
+        ],
+        "appraisalHistory": [],
+        "bankAccount": {
+          "accountHolderName": "Kavita Iyer",
+          "bankName": "Axis Bank",
+          "ifscCode": "UTIB0000112",
+          "accountNumberMasked": "XXXX-XXXX-1287",
+          "accountNumberLast4": "1287",
+          "verificationStatus": "Unverified"
+        },
+        "disbursement": {
+          "status": "Not Initiated"
+        },
+        "encryptionMetadata": {
+          "encryptedFields": [
+            "panNumber",
+            "bankAccountNumber",
+            "aadhaarVerificationHash"
+          ],
+          "algorithm": "AES-256-GCM",
+          "aadhaarStoredFull": false
+        },
+        "repayments": []
+      },
+      "encryptedPan": "a6e3b2135b16272b1efad77c:f41693ff39e44458019d675de9c4bed2:2103a27b9c25efe514f0",
+      "encryptedAccountNumber": "d879e0cbf40dd1adc4761672:9d52eef57e2152c31ca79b7911893846:8d2aa900f2cbb91639f9be7879",
+      "aadhaarVerificationHash": "e6d59917e83dfbf5b089ab7cf6f0b4e67bfc0f2e39e29e61680cd873f46abc98"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "AUD-B33F0BCE",
+      "applicationId": "GL-2026-0841",
+      "applicationNumber": "AVGL-MUM04-0841",
+      "timestamp": "2026-11-18T02:34:23.588Z",
+      "actorId": "customer-01",
+      "actorName": "Ananya Deshpande",
+      "actorRole": "CUSTOMER",
+      "action": "EMI #3 Paid (RCPT-0841-03)",
+      "details": "Collected ₹24,714 (Principal ₹22,605 + Interest ₹2,109) via UPI · Ref UPI69263576.",
+      "previousStatus": "Disbursed",
+      "newStatus": "Disbursed",
+      "integrityHash": "71f1d8c4b588b245"
+    },
+    {
+      "id": "AUD-979470AB",
+      "applicationId": "GL-2026-0841",
+      "applicationNumber": "AVGL-MUM04-0841",
+      "timestamp": "2026-11-18T02:34:23.566Z",
+      "actorId": "admin-01",
+      "actorName": "Vikramaditya Nair",
+      "actorRole": "BRANCH_ADMIN",
+      "action": "Sanction Letter PDF Downloaded",
+      "details": "Generated dual-signed PDF for SL-2026-MUM04-0841.",
+      "previousStatus": "Disbursed",
+      "newStatus": "Disbursed",
+      "integrityHash": "6da490e932d214b6"
+    },
+    {
+      "id": "AUD-CAD2039C",
+      "applicationId": "GL-2026-0841",
+      "applicationNumber": "AVGL-MUM04-0841",
+      "timestamp": "2026-11-17T16:42:06.865Z",
+      "actorId": "staff-01",
+      "actorName": "Priya Sharma",
+      "actorRole": "BRANCH_STAFF",
+      "action": "Sanction Letter PDF Downloaded",
+      "details": "Generated signed PDF for SL-2026-MUM04-0841.",
+      "previousStatus": "Disbursed",
+      "newStatus": "Disbursed",
+      "integrityHash": "7194fad665c14063"
+    },
+    {
+      "id": "AUD-9B3C662D",
+      "applicationId": "GL-2026-0841",
+      "applicationNumber": "AVGL-MUM04-0841",
+      "timestamp": "2026-11-15T09:20:00.000Z",
+      "actorId": "staff-01",
+      "actorName": "Priya Sharma",
+      "actorRole": "BRANCH_STAFF",
+      "action": "Application Created & KYC Submitted",
+      "details": "Customer intake completed with OCR assist and explicit consent recorded. Aadhaar masked on intake.",
+      "previousStatus": "Draft",
+      "newStatus": "KYC Pending",
+      "integrityHash": "8a5b5204d57a926c"
+    },
+    {
+      "id": "AUD-0F690F78",
+      "applicationId": "GL-2026-0841",
+      "applicationNumber": "AVGL-MUM04-0841",
+      "timestamp": "2026-11-15T10:05:00.000Z",
+      "actorId": "admin-01",
+      "actorName": "Vikramaditya Nair",
+      "actorRole": "BRANCH_ADMIN",
+      "action": "KYC Decision: Approved",
+      "details": "Branch Administrator verified original PAN and masked Aadhaar.",
+      "previousStatus": "KYC Pending",
+      "newStatus": "Appraisal Pending",
+      "integrityHash": "0346eb0e8951d079"
+    },
+    {
+      "id": "AUD-8393709D",
+      "applicationId": "GL-2026-0841",
+      "applicationNumber": "AVGL-MUM04-0841",
+      "timestamp": "2026-11-15T11:30:00.000Z",
+      "actorId": "appraiser-01",
+      "actorName": "Rajesh Kulkarni",
+      "actorRole": "APPRAISER",
+      "action": "Gold Appraisal Completed",
+      "details": "2 ornaments appraised: Gross 63.30g, Net 60.20g (22K), Total Value ₹4,12,671.",
+      "previousStatus": "Appraisal Pending",
+      "newStatus": "Loan Offer Ready",
+      "integrityHash": "826dcfd614d4af06"
+    },
+    {
+      "id": "AUD-A21614A0",
+      "applicationId": "GL-2026-0841",
+      "applicationNumber": "AVGL-MUM04-0841",
+      "timestamp": "2026-11-16T08:45:00.000Z",
+      "actorId": "admin-01",
+      "actorName": "Vikramaditya Nair",
+      "actorRole": "BRANCH_ADMIN",
+      "action": "Collateral Sealed & Sanction Signed",
+      "details": "Package sealed (SEAL-MUM04-88412) in Vault A / BOX-A2-14. Dual signatures captured.",
+      "previousStatus": "Sanctioned",
+      "newStatus": "Collateral Stored",
+      "integrityHash": "c828c94f56dda85d"
+    },
+    {
+      "id": "AUD-693772FF",
+      "applicationId": "GL-2026-0841",
+      "applicationNumber": "AVGL-MUM04-0841",
+      "timestamp": "2026-11-16T14:15:00.000Z",
+      "actorId": "admin-01",
+      "actorName": "Vikramaditya Nair",
+      "actorRole": "BRANCH_ADMIN",
+      "action": "Loan Disbursed",
+      "details": "Disbursed 277935 INR via UTR HDFCR52026111600984122 to verified HDFC account ending 6619.",
+      "previousStatus": "Disbursement Pending",
+      "newStatus": "Disbursed",
+      "integrityHash": "c94213a34fd18819"
+    },
+    {
+      "id": "AUD-A261E56F",
+      "applicationId": "GL-2026-0842",
+      "applicationNumber": "AVGL-MUM04-0842",
+      "timestamp": "2026-11-16T14:15:00.000Z",
+      "actorId": "appraiser-01",
+      "actorName": "Rajesh Kulkarni",
+      "actorRole": "APPRAISER",
+      "action": "Gold Appraisal Completed",
+      "details": "2 bangles appraised: Net 27.00g (22K), Total Value ₹1,85,085. Eligible up to ₹1,38,813.",
+      "previousStatus": "Appraisal Pending",
+      "newStatus": "Loan Offer Ready",
+      "integrityHash": "29e4fdbbfabcb7fa"
+    },
+    {
+      "id": "AUD-A3F79758",
+      "applicationId": "GL-2026-0843",
+      "applicationNumber": "AVGL-MUM04-0843",
+      "timestamp": "2026-11-17T06:30:00.000Z",
+      "actorId": "admin-01",
+      "actorName": "Vikramaditya Nair",
+      "actorRole": "BRANCH_ADMIN",
+      "action": "KYC Decision: Approved",
+      "details": "KYC approved and queued for bullion appraisal.",
+      "previousStatus": "KYC Pending",
+      "newStatus": "Appraisal Pending",
+      "integrityHash": "b1d63866a0571a2a"
+    },
+    {
+      "id": "AUD-9D7FEA24",
+      "applicationId": "GL-2026-0844",
+      "applicationNumber": "AVGL-MUM04-0844",
+      "timestamp": "2026-11-17T06:30:00.000Z",
+      "actorId": "staff-01",
+      "actorName": "Priya Sharma",
+      "actorRole": "BRANCH_STAFF",
+      "action": "Submitted for KYC Review",
+      "details": "Customer Kavita Iyer intake submitted with OCR-assisted PAN extraction and consent.",
+      "previousStatus": "Draft",
+      "newStatus": "KYC Pending",
+      "integrityHash": "f6b6f3ec1ec0311a"
+    }
+  ]
+}

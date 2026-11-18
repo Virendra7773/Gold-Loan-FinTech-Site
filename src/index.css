@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Premium Surface & Float Utilities */
+.premium-canvas {
+  background-color: #f4f5f7;
+  background-image: radial-gradient(
+    ellipse 80% 40% at 50% -10%,
+    rgba(197, 150, 58, 0.08),
+    transparent 70%
+  );
+}
+
+.vault-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.03),
+    0 8px 24px -12px rgba(15, 23, 42, 0.06);
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 200ms ease;
+}
+
+.vault-card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: rgba(197, 150, 58, 0.45);
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.05),
+    0 14px 32px -12px rgba(180, 123, 27, 0.14);
+}
+
+.btn-bullion {
+  background: linear-gradient(180deg, #c28e2b 0%, #9b6b16 100%);
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 2px 6px rgba(155, 107, 22, 0.28);
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.btn-bullion:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 6px 14px rgba(155, 107, 22, 0.32);
+}
+
+.btn-bullion:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+.floating-dock {
+  background: rgba(11, 17, 30, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(197, 150, 58, 0.35);
+  box-shadow:
+    0 16px 40px -10px rgba(2, 6, 23, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vault-card-interactive:hover,
+  .btn-bullion:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only-container {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+}

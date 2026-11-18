@@ -1,0 +1,6 @@
+{
+  "name": "Aurelia Vault — Gold Loan Portal",
+  "description": "End-to-end gold loan origination, OCR-assisted KYC intake, bullion appraisal, vault collateral custody, sanction letter signing, and disbursement portal.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
