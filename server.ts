@@ -17,6 +17,7 @@ import { extractKycDocumentWithGemini } from './server/ocr.ts';
 import {
   STAFF_DIRECTORY,
   appendStandaloneAuditLog,
+  authenticateRoleSwitch,
   createNewApplication,
   getBootstrapData,
   getPolicy,
@@ -64,24 +65,61 @@ async function startServer() {
     res.json({ staffDirectory: STAFF_DIRECTORY });
   });
 
+  app.post('/api/auth/login', (req, res) => {
+    try {
+      const { staffId, loginId, password } = req.body as {
+        staffId?: string;
+        loginId?: string;
+        password?: string;
+      };
+      if (!staffId || !loginId || !password) {
+        res.status(400).json({ error: 'Role, Login ID, and Password are required.' });
+        return;
+      }
+      const user = authenticateRoleSwitch(staffId, loginId, password);
+      const auditEntry = appendStandaloneAuditLog({
+        applicationId: 'ROLE-AUTH',
+        applicationNumber: user.employeeCode,
+        actor: user,
+        action: `Role Sign-In Verified (${user.role})`,
+        details: `${user.name} (${user.employeeCode}) authenticated via role login interface.`,
+      });
+      res.json({ user, auditEntry });
+    } catch (err) {
+      res.status(401).json({
+        error: err instanceof Error ? err.message : 'Authentication failed.',
+      });
+    }
+  });
+
   app.get('/api/bootstrap', attachStaffUser, (req: AuthenticatedRequest, res) => {
     const data = getBootstrapData(req.staffUser!);
     res.json(data);
   });
 
-  // Gemini OCR Assist (Branch Staff / Branch Admin)
+  // Instant Demo KYC OCR Assist (Branch Staff / Branch Admin)
   app.post(
     '/api/ocr/extract',
     attachStaffUser,
     requireRoles(['BRANCH_STAFF', 'BRANCH_ADMIN']),
     async (req: AuthenticatedRequest, res) => {
       try {
-        const { base64Data, mimeType, documentHint, applicationId, applicationNumber } = req.body as {
+        const {
+          base64Data,
+          mimeType,
+          documentHint,
+          applicationId,
+          applicationNumber,
+          draftKey,
+          existingName,
+        } = req.body as {
           base64Data?: string;
           mimeType?: string;
           documentHint?: 'PAN' | 'Aadhaar';
           applicationId?: string;
           applicationNumber?: string;
+          draftKey?: string;
+          existingName?: string;
         };
 
         if (!base64Data) {
@@ -93,6 +131,8 @@ async function startServer() {
           base64Data,
           mimeType: mimeType || 'image/jpeg',
           documentHint,
+          draftKey,
+          existingName,
         });
 
         appendStandaloneAuditLog({
@@ -100,7 +140,7 @@ async function startServer() {
           applicationNumber: applicationNumber || 'NEW-INTAKE',
           actor: req.staffUser!,
           action: `OCR Extraction Assist (${result.documentType})`,
-          details: `Gemini OCR processed ${documentHint ?? result.documentType} image. Aadhaar automatically masked (${result.aadhaarMasked ?? 'N/A'}). Staff reminded OCR is an entry aid only.`,
+          details: `Demo KYC OCR processed ${documentHint ?? result.documentType} scan. Aadhaar automatically masked (${result.aadhaarMasked ?? 'N/A'}). Staff reminded OCR is an entry aid only.`,
         });
 
         res.json(result);
@@ -128,6 +168,25 @@ async function startServer() {
             error: 'Explicit customer consent must be captured before submitting for KYC review.',
           });
           return;
+        }
+        if (body.submitForKyc) {
+          const items: GoldItem[] = Array.isArray(body.goldItems) ? body.goldItems : [];
+          if (items.length === 0) {
+            res.status(400).json({ error: 'At least one gold ornament must be pledged.' });
+            return;
+          }
+          const missingBill = items.some(
+            (item) =>
+              !item.purchaseBillAvailable ||
+              !item.purchaseBillRef?.trim() ||
+              !item.purchaseBillImageUrl
+          );
+          if (missingBill) {
+            res.status(400).json({
+              error: 'Original Gold Bill (invoice reference number and bill scan) is mandatory for every pledged ornament.',
+            });
+            return;
+          }
         }
         const created = createNewApplication(req.staffUser!, body);
         res.status(201).json(created);
@@ -220,6 +279,17 @@ async function startServer() {
             }
             if (app.goldItems.length === 0) {
               throw new Error('At least one gold ornament must be captured.');
+            }
+            const missingBill = app.goldItems.some(
+              (item) =>
+                !item.purchaseBillAvailable ||
+                !item.purchaseBillRef?.trim() ||
+                !item.purchaseBillImageUrl
+            );
+            if (missingBill) {
+              throw new Error(
+                'Original Gold Bill (invoice reference number and bill scan) is mandatory for every pledged ornament.'
+              );
             }
             app.status = 'KYC Pending';
             app.kycDecision = 'Pending';

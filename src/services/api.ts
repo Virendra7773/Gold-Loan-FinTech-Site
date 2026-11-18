@@ -52,6 +52,17 @@ export const portalApi = {
     return requestJson<BootstrapResponse>('/api/bootstrap', staffId);
   },
 
+  loginRole(payload: { staffId: string; loginId: string; password: string }) {
+    return requestJson<{ user: StaffUser; auditEntry: AuditLogEntry }>(
+      '/api/auth/login',
+      payload.staffId,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+  },
+
   extractOcr(
     staffId: string,
     payload: {
@@ -60,6 +71,8 @@ export const portalApi = {
       documentHint?: 'PAN' | 'Aadhaar';
       applicationId?: string;
       applicationNumber?: string;
+      draftKey?: string;
+      existingName?: string;
     }
   ) {
     return requestJson<OcrExtractionResult>('/api/ocr/extract', staffId, {

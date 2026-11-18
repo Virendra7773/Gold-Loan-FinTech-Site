@@ -1,34 +1,49 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowUpRight,
+  CheckCircle2,
   ClipboardCheck,
   FileText,
   Landmark,
+  Layers,
+  Loader2,
   Plus,
   Scale,
   Search,
   ShieldCheck,
   UserCheck,
+  UserPlus,
   Vault,
+  X,
 } from 'lucide-react';
+import type {
+  AsyncNotice,
+  DeskSession,
+  IntakeDraftState,
+  OcrInputSource,
+} from './types/desk.ts';
+import { createIntakeDraft } from './types/desk.ts';
 import type {
   ApplicationStatus,
   AuditLogEntry,
   BranchWalletSummary,
   GoldLoanApplication,
+  KycDocumentAttachment,
   LendingPolicy,
   StaffRole,
   StaffUser,
 } from './types/portal.ts';
 import { DEFAULT_LENDING_POLICY, formatGrams, formatINR } from './utils/loanMath.ts';
 import { portalApi } from './services/api.ts';
-import { ApplicationIntakeModal } from './components/ApplicationIntakeModal.tsx';
 import { ApplicationWorkspace } from './components/ApplicationWorkspace.tsx';
 import { BranchWalletView } from './components/BranchWalletView.tsx';
 import { ComplianceAuditView } from './components/ComplianceAuditView.tsx';
+import { CustomerIntakeWorkspace } from './components/CustomerIntakeWorkspace.tsx';
 import { CustomerPortalView } from './components/CustomerPortalView.tsx';
+import { RoleLoginModal } from './components/RoleLoginModal.tsx';
 import { StatusText } from './components/StatusText.tsx';
 
 type MainSection = 'queue' | 'wallet' | 'compliance';
@@ -57,10 +72,31 @@ export default function App() {
   const [section, setSection] = useState<MainSection>('queue');
   const [queueFilter, setQueueFilter] = useState<QueueFilter>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
 
-  const [intakeOpen, setIntakeOpen] = useState(false);
-  const [editingApp, setEditingApp] = useState<GoldLoanApplication | null>(null);
+  // Concurrent Multi-Customer Desk State
+  const [openSessions, setOpenSessions] = useState<DeskSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [intakeDrafts, setIntakeDrafts] = useState<Record<string, IntakeDraftState>>({});
+  const [caseAsyncLabels, setCaseAsyncLabels] = useState<Record<string, string | null>>({});
+  const [asyncNotices, setAsyncNotices] = useState<AsyncNotice[]>([]);
+  const [pendingRoleSwitchId, setPendingRoleSwitchId] = useState<string | null>(null);
+
+  const walkInSeqRef = useRef(0);
+  const activeSessionIdRef = useRef<string | null>(null);
+  const intakeDraftsRef = useRef<Record<string, IntakeDraftState>>({});
+  const staffIdRef = useRef(staffId);
+
+  useEffect(() => {
+    activeSessionIdRef.current = activeSessionId;
+  }, [activeSessionId]);
+
+  useEffect(() => {
+    intakeDraftsRef.current = intakeDrafts;
+  }, [intakeDrafts]);
+
+  useEffect(() => {
+    staffIdRef.current = staffId;
+  }, [staffId]);
 
   const loadPortalData = useCallback(async (activeStaffId: string) => {
     setLoading(true);
@@ -84,9 +120,14 @@ export default function App() {
     loadPortalData(staffId);
   }, [staffId, loadPortalData]);
 
+  const activeSession = useMemo(() => {
+    return openSessions.find((s) => s.id === activeSessionId) ?? null;
+  }, [openSessions, activeSessionId]);
+
   const selectedApplication = useMemo(() => {
-    return applications.find((a) => a.id === selectedAppId) ?? null;
-  }, [applications, selectedAppId]);
+    if (activeSession?.kind !== 'case') return null;
+    return applications.find((a) => a.id === activeSession.applicationId) ?? null;
+  }, [applications, activeSession]);
 
   const filteredApplications = useMemo(() => {
     return applications.filter((app) => {
@@ -141,35 +182,397 @@ export default function App() {
     };
   }, [applications]);
 
-  function handleApplicationUpdated(
-    updatedApp: GoldLoanApplication,
-    auditEntry: AuditLogEntry,
-    nextWallet?: BranchWalletSummary
-  ) {
-    setApplications((prev) => {
-      const exists = prev.some((a) => a.id === updatedApp.id);
-      if (exists) {
-        return prev.map((a) => (a.id === updatedApp.id ? updatedApp : a));
+  const pushNotice = useCallback((notice: Omit<AsyncNotice, 'id'>) => {
+    const id = `notice-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`;
+    setAsyncNotices((prev) => [{ ...notice, id }, ...prev].slice(0, 4));
+    window.setTimeout(() => {
+      setAsyncNotices((prev) => prev.filter((n) => n.id !== id));
+    }, 6500);
+  }, []);
+
+  const handleApplicationUpdated = useCallback(
+    (
+      updatedApp: GoldLoanApplication,
+      auditEntry: AuditLogEntry,
+      nextWallet?: BranchWalletSummary
+    ) => {
+      setApplications((prev) => {
+        const exists = prev.some((a) => a.id === updatedApp.id);
+        if (exists) {
+          return prev.map((a) => (a.id === updatedApp.id ? updatedApp : a));
+        }
+        return [updatedApp, ...prev];
+      });
+      if (auditEntry) {
+        setAuditLogs((prev) => [auditEntry, ...prev]);
       }
-      return [updatedApp, ...prev];
+      if (nextWallet) {
+        setBranchWallet(nextWallet);
+      }
+    },
+    []
+  );
+
+  const patchDraft = useCallback(
+    (
+      draftId: string,
+      updater: Partial<IntakeDraftState> | ((prev: IntakeDraftState) => IntakeDraftState)
+    ) => {
+      setIntakeDrafts((prev) => {
+        const current = prev[draftId];
+        if (!current) return prev;
+        const nextDraft =
+          typeof updater === 'function' ? updater(current) : { ...current, ...updater };
+        const nextMap = { ...prev, [draftId]: nextDraft };
+        intakeDraftsRef.current = nextMap;
+        return nextMap;
+      });
+    },
+    []
+  );
+
+  const openNewWalkInSession = useCallback(() => {
+    walkInSeqRef.current += 1;
+    const draft = createIntakeDraft(walkInSeqRef.current);
+    setIntakeDrafts((prev) => {
+      const next = { ...prev, [draft.draftId]: draft };
+      intakeDraftsRef.current = next;
+      return next;
     });
-    if (auditEntry) {
-      setAuditLogs((prev) => [auditEntry, ...prev]);
-    }
-    if (nextWallet) {
-      setBranchWallet(nextWallet);
-    }
+    setOpenSessions((prev) => [...prev, { id: draft.draftId, kind: 'intake', draftId: draft.draftId }]);
+    setActiveSessionId(draft.draftId);
+    setSection('queue');
+  }, []);
+
+  const openEditIntakeSession = useCallback(
+    (app: GoldLoanApplication) => {
+      const existingSessionId = `intake-edit-${app.id}`;
+      const alreadyOpen = openSessions.some((s) => s.id === existingSessionId);
+      if (!alreadyOpen) {
+        const draft = createIntakeDraft(0, app);
+        setIntakeDrafts((prev) => {
+          const next = { ...prev, [draft.draftId]: draft };
+          intakeDraftsRef.current = next;
+          return next;
+        });
+        setOpenSessions((prev) => [
+          ...prev,
+          { id: draft.draftId, kind: 'intake', draftId: draft.draftId },
+        ]);
+      }
+      setActiveSessionId(existingSessionId);
+      setSection('queue');
+    },
+    [openSessions]
+  );
+
+  const openCaseSession = useCallback(
+    (applicationId: string) => {
+      const caseSessionId = `case-${applicationId}`;
+      setOpenSessions((prev) => {
+        if (prev.some((s) => s.id === caseSessionId)) return prev;
+        return [...prev, { id: caseSessionId, kind: 'case', applicationId }];
+      });
+      setActiveSessionId(caseSessionId);
+      setSection('queue');
+    },
+    []
+  );
+
+  const closeDeskSession = useCallback((sessionId: string) => {
+    setOpenSessions((prev) => {
+      const idx = prev.findIndex((s) => s.id === sessionId);
+      if (idx === -1) return prev;
+      const target = prev[idx];
+      const next = prev.filter((s) => s.id !== sessionId);
+      if (target.kind === 'intake') {
+        setIntakeDrafts((draftPrev) => {
+          const copy = { ...draftPrev };
+          delete copy[target.draftId];
+          intakeDraftsRef.current = copy;
+          return copy;
+        });
+      }
+      if (activeSessionIdRef.current === sessionId) {
+        const fallback = next[idx] ?? next[idx - 1] ?? null;
+        setActiveSessionId(fallback ? fallback.id : null);
+      }
+      return next;
+    });
+  }, []);
+
+  // Asynchronous background demo OCR runner per customer draft
+  const runDraftOcr = useCallback(
+    async (
+      draftId: string,
+      source: OcrInputSource,
+      docCategory: KycDocumentAttachment['docCategory'],
+      hint: 'PAN' | 'Aadhaar'
+    ) => {
+      patchDraft(draftId, (prev) => ({
+        ...prev,
+        ocrError: null,
+        ocrInFlightCount: prev.ocrInFlightCount + 1,
+      }));
+
+      try {
+        const dataUrl =
+          'dataUrl' in source
+            ? source.dataUrl
+            : await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result));
+                reader.onerror = () => reject(new Error('Failed to read selected file.'));
+                reader.readAsDataURL(source);
+              });
+
+        const draftSnapshot = intakeDraftsRef.current[draftId];
+        const ocrResult = await portalApi.extractOcr(staffIdRef.current, {
+          base64Data: dataUrl,
+          mimeType: source.type || 'image/jpeg',
+          documentHint: hint,
+          applicationId: draftSnapshot?.existingAppId,
+          applicationNumber: draftSnapshot?.existingAppNumber,
+          draftKey: draftId,
+          existingName: draftSnapshot?.fullName || undefined,
+        });
+
+        const summaryParts: string[] = [];
+        if (ocrResult.fullName) summaryParts.push(`Name: ${ocrResult.fullName}`);
+        if (ocrResult.panNumber) summaryParts.push(`PAN: ${ocrResult.panNumber}`);
+        if (ocrResult.aadhaarMasked) summaryParts.push(`Aadhaar: ${ocrResult.aadhaarMasked}`);
+
+        let updatedLabel: string = hint;
+        patchDraft(draftId, (prev) => {
+          const nextName = ocrResult.fullName && !prev.fullName ? ocrResult.fullName : prev.fullName;
+          updatedLabel = nextName || prev.label;
+          return {
+            ...prev,
+            ocrInFlightCount: Math.max(0, prev.ocrInFlightCount - 1),
+            ocrFeedback: ocrResult,
+            fullName: nextName,
+            accountHolderName:
+              ocrResult.fullName && !prev.accountHolderName
+                ? ocrResult.fullName
+                : prev.accountHolderName,
+            panNumber:
+              ocrResult.panNumber && !prev.panNumber ? ocrResult.panNumber : prev.panNumber,
+            dateOfBirth:
+              ocrResult.dateOfBirth && !prev.dateOfBirth
+                ? ocrResult.dateOfBirth
+                : prev.dateOfBirth,
+            address: ocrResult.address && !prev.address ? ocrResult.address : prev.address,
+            aadhaarRawDigits: ocrResult.aadhaarLast4 || prev.aadhaarRawDigits,
+            aadhaarInput: ocrResult.aadhaarLast4
+              ? ocrResult.aadhaarMasked || `XXXX-XXXX-${ocrResult.aadhaarLast4}`
+              : prev.aadhaarInput,
+            kycDocuments: [
+              ...prev.kycDocuments,
+              {
+                id: `doc-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+                docCategory,
+                fileName: source.name,
+                mimeType: source.type || 'image/jpeg',
+                previewDataUrl: dataUrl,
+                ocrAssisted: true,
+                ocrExtractedSummary: summaryParts.join(' · ') || ocrResult.confidenceNotes,
+                uploadedAt: new Date().toISOString(),
+              },
+            ],
+          };
+        });
+
+        if (activeSessionIdRef.current !== draftId) {
+          pushNotice({
+            tone: 'ok',
+            title: `KYC Scan Ready · ${updatedLabel}`,
+            detail: `${docCategory} extracted and fields pre-filled in background.`,
+            targetSessionId: draftId,
+          });
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'OCR processing failed.';
+        patchDraft(draftId, (prev) => ({
+          ...prev,
+          ocrInFlightCount: Math.max(0, prev.ocrInFlightCount - 1),
+          ocrError: message,
+        }));
+        if (activeSessionIdRef.current !== draftId) {
+          pushNotice({
+            tone: 'err',
+            title: 'Background Scan Failed',
+            detail: message,
+            targetSessionId: draftId,
+          });
+        }
+      }
+    },
+    [patchDraft, pushNotice]
+  );
+
+  // Asynchronous background customer application submission per draft
+  const submitDraft = useCallback(
+    async (draftId: string, submitForKyc: boolean) => {
+      const draft = intakeDraftsRef.current[draftId];
+      if (!draft) return;
+
+      if (!draft.fullName.trim() || !draft.phone.trim() || !draft.panNumber.trim()) {
+        patchDraft(draftId, {
+          currentStep: 2,
+          formError: 'Customer name, phone number, and PAN are required.',
+        });
+        return;
+      }
+      if (submitForKyc && !draft.consentCaptured) {
+        patchDraft(draftId, {
+          currentStep: 2,
+          formError: 'Customer consent confirmation is required before submitting for KYC.',
+        });
+        return;
+      }
+      if (submitForKyc && draft.goldItems.some((g) => !g.customerDescription.trim())) {
+        patchDraft(draftId, {
+          currentStep: 3,
+          formError: 'Provide a customer description for each pledged gold ornament.',
+        });
+        return;
+      }
+      if (
+        submitForKyc &&
+        draft.goldItems.some(
+          (g) => !g.purchaseBillAvailable || !g.purchaseBillRef?.trim() || !g.purchaseBillImageUrl
+        )
+      ) {
+        patchDraft(draftId, {
+          currentStep: 3,
+          formError:
+            'Original Gold Bill (invoice number and bill scan) is mandatory for every pledged ornament.',
+        });
+        return;
+      }
+
+      patchDraft(draftId, { submitting: true, formError: null });
+      const activeActorId = staffIdRef.current;
+
+      try {
+        const acctDigits = draft.accountNumber.replace(/\D/g, '');
+        const res =
+          draft.existingAppId
+            ? await portalApi.updateIntake(activeActorId, draft.existingAppId, {
+                customer: {
+                  fullName: draft.fullName,
+                  phone: draft.phone,
+                  dateOfBirth: draft.dateOfBirth,
+                  address: draft.address,
+                  panNumber: draft.panNumber,
+                  aadhaarNumberOrLast4: draft.aadhaarRawDigits || draft.aadhaarInput,
+                  consentCaptured: draft.consentCaptured,
+                  ocrDisclaimerAcknowledged: draft.ocrDisclaimerAcknowledged,
+                },
+                kycDocuments: draft.kycDocuments,
+                goldItems: draft.goldItems,
+                bankAccount: {
+                  accountHolderName: draft.accountHolderName || draft.fullName,
+                  bankName: draft.bankName,
+                  ifscCode: draft.ifscCode,
+                  accountNumber: acctDigits.length >= 6 ? acctDigits : undefined,
+                },
+                submitForKyc,
+              })
+            : await portalApi.createApplication(activeActorId, {
+                customer: {
+                  fullName: draft.fullName,
+                  phone: draft.phone,
+                  dateOfBirth: draft.dateOfBirth,
+                  address: draft.address,
+                  panNumber: draft.panNumber,
+                  aadhaarNumberOrLast4: draft.aadhaarRawDigits || draft.aadhaarInput,
+                  consentCaptured: draft.consentCaptured,
+                  ocrDisclaimerAcknowledged: draft.ocrDisclaimerAcknowledged,
+                },
+                kycDocuments: draft.kycDocuments,
+                goldItems: draft.goldItems,
+                bankAccount: {
+                  accountHolderName: draft.accountHolderName || draft.fullName,
+                  bankName: draft.bankName,
+                  ifscCode: draft.ifscCode,
+                  accountNumber: acctDigits || '000000',
+                },
+                submitForKyc,
+              });
+
+        const savedApp = res.application;
+        handleApplicationUpdated(savedApp, res.auditEntry, res.branchWallet);
+        const caseSessionId = `case-${savedApp.id}`;
+
+        setOpenSessions((prev) => {
+          const withoutDuplicateCase = prev.filter(
+            (s) => s.id === draftId || s.id !== caseSessionId
+          );
+          return withoutDuplicateCase.map((s) =>
+            s.id === draftId
+              ? ({ id: caseSessionId, kind: 'case', applicationId: savedApp.id } as DeskSession)
+              : s
+          );
+        });
+
+        setIntakeDrafts((prev) => {
+          const copy = { ...prev };
+          delete copy[draftId];
+          intakeDraftsRef.current = copy;
+          return copy;
+        });
+
+        if (activeSessionIdRef.current === draftId) {
+          setActiveSessionId(caseSessionId);
+          setSection('queue');
+        }
+
+        setAsyncNotices((prev) => prev.filter((n) => n.targetSessionId !== draftId));
+
+        pushNotice({
+          tone: 'ok',
+          title: `${savedApp.applicationNumber} · ${savedApp.customer.fullName}`,
+          detail: submitForKyc
+            ? 'Submitted for Branch Admin KYC review.'
+            : 'Saved as Draft in pipeline.',
+          targetSessionId: caseSessionId,
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unable to save application.';
+        patchDraft(draftId, { submitting: false, formError: message });
+        if (activeSessionIdRef.current !== draftId) {
+          pushNotice({
+            tone: 'err',
+            title: `Submission Failed · ${draft.fullName || draft.label}`,
+            detail: message,
+            targetSessionId: draftId,
+          });
+        }
+      }
+    },
+    [handleApplicationUpdated, patchDraft, pushNotice]
+  );
+
+  function requestRoleSwitch(nextStaffId: string) {
+    if (nextStaffId === staffId) return;
+    setPendingRoleSwitchId(nextStaffId);
   }
 
-  function handleRoleSwitch(nextStaffId: string) {
-    const target = staffDirectory.find((s) => s.id === nextStaffId);
-    setStaffId(nextStaffId);
-    if (target?.role === 'CUSTOMER') {
-      setSelectedAppId(null);
+  function completeRoleSwitch(verifiedUser: StaffUser) {
+    setStaffId(verifiedUser.id);
+    setPendingRoleSwitchId(null);
+    if (verifiedUser.role === 'CUSTOMER') {
+      setActiveSessionId(null);
       setSection('queue');
-    } else if (target && !['BRANCH_ADMIN', 'AUDITOR'].includes(target.role) && section === 'wallet') {
+    } else if (!['BRANCH_ADMIN', 'AUDITOR'].includes(verifiedUser.role) && section === 'wallet') {
       setSection('queue');
     }
+    pushNotice({
+      tone: 'ok',
+      title: `Signed In · ${ROLE_LABELS[verifiedUser.role]}`,
+      detail: `Active workspace switched to ${verifiedUser.name} (${verifiedUser.employeeCode}).`,
+    });
   }
 
   const isCustomerMode = currentUser?.role === 'CUSTOMER';
@@ -236,10 +639,10 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     setSection('queue');
-                    setSelectedAppId(null);
+                    setActiveSessionId(null);
                   }}
                   className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
-                    section === 'queue' && !selectedAppId
+                    section === 'queue' && !activeSessionId
                       ? 'bg-white/10 text-white'
                       : 'text-slate-300 hover:bg-white/5 hover:text-white'
                   }`}
@@ -253,7 +656,7 @@ export default function App() {
                     type="button"
                     onClick={() => {
                       setSection('wallet');
-                      setSelectedAppId(null);
+                      setActiveSessionId(null);
                     }}
                     className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
                       section === 'wallet'
@@ -270,7 +673,7 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     setSection('compliance');
-                    setSelectedAppId(null);
+                    setActiveSessionId(null);
                   }}
                   className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
                     section === 'compliance'
@@ -293,7 +696,7 @@ export default function App() {
                     type="button"
                     onClick={() => {
                       setSection('queue');
-                      setSelectedAppId(null);
+                      setActiveSessionId(null);
                       setQueueFilter('KYC');
                     }}
                     className="w-full flex items-center justify-between px-3 py-2 text-slate-300 hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
@@ -311,7 +714,7 @@ export default function App() {
                     type="button"
                     onClick={() => {
                       setSection('queue');
-                      setSelectedAppId(null);
+                      setActiveSessionId(null);
                       setQueueFilter('APPRAISAL');
                     }}
                     className="w-full flex items-center justify-between px-3 py-2 text-slate-300 hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
@@ -350,7 +753,7 @@ export default function App() {
                 <button
                   key={s.id}
                   type="button"
-                  onClick={() => handleRoleSwitch(s.id)}
+                  onClick={() => requestRoleSwitch(s.id)}
                   className={`w-full px-2.5 py-2 rounded-lg text-left transition-all flex items-center justify-between gap-2 text-xs cursor-pointer ${
                     isActive
                       ? 'bg-gradient-to-r from-[#C5963A]/20 to-transparent border border-[#C5963A]/50 text-white'
@@ -385,10 +788,24 @@ export default function App() {
               <h1 className="text-base font-semibold text-slate-900 whitespace-nowrap shrink-0">
                 Customer Loan Portal
               </h1>
+            ) : activeSession?.kind === 'intake' ? (
+              <button
+                type="button"
+                onClick={() => setActiveSessionId(null)}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-900 hover:text-[#9A6B16] whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>
+                  Pipeline /{' '}
+                  {intakeDrafts[activeSession.draftId]?.fullName.trim() ||
+                    intakeDrafts[activeSession.draftId]?.label ||
+                    'Walk-In Intake'}
+                </span>
+              </button>
             ) : selectedApplication ? (
               <button
                 type="button"
-                onClick={() => setSelectedAppId(null)}
+                onClick={() => setActiveSessionId(null)}
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-900 hover:text-[#9A6B16] whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -417,7 +834,7 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     setSection('queue');
-                    setSelectedAppId(null);
+                    setActiveSessionId(null);
                     setQueueFilter('ALL');
                   }}
                   className="hover:text-slate-900 hover:underline underline-offset-4 whitespace-nowrap shrink-0 cursor-pointer"
@@ -428,7 +845,7 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     setSection('queue');
-                    setSelectedAppId(null);
+                    setActiveSessionId(null);
                     setQueueFilter('KYC');
                   }}
                   className="hover:text-slate-900 hover:underline underline-offset-4 whitespace-nowrap shrink-0 cursor-pointer"
@@ -440,7 +857,7 @@ export default function App() {
                     type="button"
                     onClick={() => {
                       setSection('wallet');
-                      setSelectedAppId(null);
+                      setActiveSessionId(null);
                     }}
                     className="hover:text-slate-900 hover:underline underline-offset-4 whitespace-nowrap shrink-0 cursor-pointer"
                   >
@@ -451,7 +868,7 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     setSection('compliance');
-                    setSelectedAppId(null);
+                    setActiveSessionId(null);
                   }}
                   className="hover:text-slate-900 hover:underline underline-offset-4 whitespace-nowrap shrink-0 cursor-pointer"
                 >
@@ -466,7 +883,7 @@ export default function App() {
             {isCustomerMode ? (
               <button
                 type="button"
-                onClick={() => handleRoleSwitch('staff-01')}
+                onClick={() => requestRoleSwitch('staff-01')}
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-slate-800 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <UserCheck className="w-3.5 h-3.5" />
@@ -475,10 +892,7 @@ export default function App() {
             ) : canCreateApplication ? (
               <button
                 type="button"
-                onClick={() => {
-                  setEditingApp(null);
-                  setIntakeOpen(true);
-                }}
+                onClick={openNewWalkInSession}
                 className="btn-bullion inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -489,7 +903,7 @@ export default function App() {
                 type="button"
                 onClick={() => {
                   setSection(canViewWallet ? 'wallet' : 'compliance');
-                  setSelectedAppId(null);
+                  setActiveSessionId(null);
                 }}
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-lg whitespace-nowrap shrink-0 cursor-pointer"
               >
@@ -501,7 +915,158 @@ export default function App() {
         </header>
 
         {/* Viewport Container */}
-        <main className="flex-1 p-6 pb-24 max-w-[1360px] w-full mx-auto">
+        <main className="flex-1 p-6 pb-24 max-w-[1360px] w-full mx-auto space-y-5">
+          {/* Concurrent Multi-Customer Active Desk Bar */}
+          {!isCustomerMode && openSessions.length > 0 && !loadError && currentUser && (
+            <div className="vault-card rounded-xl px-3 py-2 flex items-center justify-between gap-3 no-print">
+              <div className="flex items-center gap-1.5 overflow-x-auto min-w-0 py-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSection('queue');
+                    setActiveSessionId(null);
+                  }}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    section === 'queue' && activeSessionId === null
+                      ? 'bg-[#0B111E] text-white'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5 text-[#D4A94B]" />
+                  <span>Pipeline ({applications.length})</span>
+                </button>
+
+                <span className="h-4 w-px bg-slate-200 mx-1 shrink-0" aria-hidden="true" />
+
+                {openSessions.map((sess) => {
+                  const isFocused = section === 'queue' && activeSessionId === sess.id;
+                  if (sess.kind === 'intake') {
+                    const draft = intakeDrafts[sess.draftId];
+                    if (!draft) return null;
+                    const title = draft.fullName.trim() || draft.label;
+                    const sub = draft.submitting
+                      ? 'Submitting…'
+                      : draft.ocrInFlightCount > 0
+                        ? 'OCR Running…'
+                        : 'Intake Draft';
+                    const isAsyncBusy = draft.submitting || draft.ocrInFlightCount > 0;
+                    return (
+                      <div
+                        key={sess.id}
+                        className={`inline-flex items-center rounded-lg border text-xs transition-all shrink-0 ${
+                          isFocused
+                            ? 'bg-[#0B111E] text-white border-[#C5963A]/60 shadow-xs'
+                            : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSection('queue');
+                            setActiveSessionId(sess.id);
+                          }}
+                          className="pl-3 pr-1.5 py-1.5 flex items-center gap-2 cursor-pointer whitespace-nowrap"
+                        >
+                          {isAsyncBusy && (
+                            <Loader2
+                              className={`w-3 h-3 animate-spin shrink-0 ${
+                                isFocused ? 'text-[#E6BF6F]' : 'text-[#9A6B16]'
+                              }`}
+                            />
+                          )}
+                          <span className="font-medium max-w-[140px] truncate">{title}</span>
+                          <span
+                            className={`text-[11px] font-mono ${
+                              isFocused ? 'text-[#E6BF6F]' : 'text-slate-500'
+                            }`}
+                          >
+                            · {sub}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => closeDeskSession(sess.id)}
+                          aria-label={`Close ${title}`}
+                          className={`pr-2 pl-1 py-1.5 rounded-r-lg cursor-pointer ${
+                            isFocused
+                              ? 'text-slate-300 hover:text-white'
+                              : 'text-slate-400 hover:text-slate-800'
+                          }`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  const app = applications.find((a) => a.id === sess.applicationId);
+                  if (!app) return null;
+                  const asyncLabel = caseAsyncLabels[app.id];
+                  return (
+                    <div
+                      key={sess.id}
+                      className={`inline-flex items-center rounded-lg border text-xs transition-all shrink-0 ${
+                        isFocused
+                          ? 'bg-[#0B111E] text-white border-[#C5963A]/60 shadow-xs'
+                          : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSection('queue');
+                          setActiveSessionId(sess.id);
+                        }}
+                        className="pl-3 pr-1.5 py-1.5 flex items-center gap-2 cursor-pointer whitespace-nowrap"
+                      >
+                        {asyncLabel && (
+                          <Loader2
+                            className={`w-3 h-3 animate-spin shrink-0 ${
+                              isFocused ? 'text-[#E6BF6F]' : 'text-[#9A6B16]'
+                            }`}
+                          />
+                        )}
+                        <span className="font-medium max-w-[140px] truncate">
+                          {app.customer.fullName}
+                        </span>
+                        <span
+                          className={`text-[11px] font-mono ${
+                            isFocused ? 'text-[#E6BF6F]' : 'text-slate-500'
+                          }`}
+                        >
+                          · {asyncLabel || app.status}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => closeDeskSession(sess.id)}
+                        aria-label={`Close ${app.customer.fullName}`}
+                        className={`pr-2 pl-1 py-1.5 rounded-r-lg cursor-pointer ${
+                          isFocused
+                            ? 'text-slate-300 hover:text-white'
+                            : 'text-slate-400 hover:text-slate-800'
+                        }`}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {canCreateApplication && (
+                <button
+                  type="button"
+                  onClick={openNewWalkInSession}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#8C5E12] bg-amber-50/90 hover:bg-amber-100 border border-amber-200 rounded-lg whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>+ Walk-In</span>
+                </button>
+              )}
+            </div>
+          )}
+
           {loadError ? (
             <div className="p-6 vault-card rounded-xl border-red-200 text-sm text-red-800 space-y-3">
               <p className="font-semibold">Unable to load portal data</p>
@@ -533,40 +1098,70 @@ export default function App() {
               policy={policy}
               onApplicationUpdated={handleApplicationUpdated}
             />
-          ) : selectedApplication && currentUser ? (
-            <ApplicationWorkspace
-              application={selectedApplication}
-              currentUser={currentUser}
-              staffDirectory={staffDirectory}
-              policy={policy}
-              auditLogs={auditLogs}
-              onApplicationUpdated={handleApplicationUpdated}
-              onEditIntake={(app) => {
-                setEditingApp(app);
-                setIntakeOpen(true);
-              }}
-              onSwitchStaffRole={handleRoleSwitch}
-            />
           ) : section === 'wallet' && branchWallet ? (
             <BranchWalletView
               wallet={branchWallet}
               applications={applications}
-              onSelectApplication={(appId) => {
-                setSection('queue');
-                setSelectedAppId(appId);
-              }}
+              onSelectApplication={(appId) => openCaseSession(appId)}
             />
           ) : section === 'compliance' && currentUser ? (
             <ComplianceAuditView
               applications={applications}
               auditLogs={auditLogs}
               currentRole={currentUser.role}
-              onSelectApplication={(appId) => {
-                setSection('queue');
-                setSelectedAppId(appId);
-              }}
+              onSelectApplication={(appId) => openCaseSession(appId)}
             />
           ) : (
+            <>
+              {/* Mounted Concurrent Customer Sessions (Preserves all unsaved inputs & async promises across tabs) */}
+              {currentUser &&
+                openSessions.map((sess) => {
+                  const isFocused = section === 'queue' && activeSessionId === sess.id;
+                  if (sess.kind === 'intake') {
+                    const draft = intakeDrafts[sess.draftId];
+                    if (!draft) return null;
+                    return (
+                      <div key={sess.id} className={isFocused ? 'block' : 'hidden'}>
+                        <CustomerIntakeWorkspace
+                          draft={draft}
+                          isActiveSession={isFocused}
+                          onPatchDraft={patchDraft}
+                          onRunOcr={runDraftOcr}
+                          onSubmitDraft={submitDraft}
+                          onStartAnotherWalkIn={openNewWalkInSession}
+                          onCloseDraft={closeDeskSession}
+                        />
+                      </div>
+                    );
+                  }
+
+                  const app = applications.find((a) => a.id === sess.applicationId);
+                  if (!app) return null;
+                  return (
+                    <div key={sess.id} className={isFocused ? 'block' : 'hidden'}>
+                      <ApplicationWorkspace
+                        application={app}
+                        currentUser={currentUser}
+                        staffDirectory={staffDirectory}
+                        policy={policy}
+                        auditLogs={auditLogs}
+                        isActiveSession={isFocused}
+                        onApplicationUpdated={handleApplicationUpdated}
+                        onEditIntake={(targetApp) => openEditIntakeSession(targetApp)}
+                        onSwitchStaffRole={requestRoleSwitch}
+                        onAsyncActivityChange={(appId, label) =>
+                          setCaseAsyncLabels((prev) => ({ ...prev, [appId]: label }))
+                        }
+                        onStartAnotherWalkIn={
+                          canCreateApplication ? openNewWalkInSession : undefined
+                        }
+                      />
+                    </div>
+                  );
+                })}
+
+              {/* Pipeline Overview (visible when no customer tab is focused) */}
+              {!activeSession && (
             <div className="space-y-6">
               {/* 4-Column Floating KPI Strip */}
               {canViewWallet && branchWallet ? (
@@ -759,11 +1354,8 @@ export default function App() {
                     {canCreateApplication && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setEditingApp(null);
-                          setIntakeOpen(true);
-                        }}
-                        className="btn-bullion inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg"
+                        onClick={openNewWalkInSession}
+                        className="btn-bullion inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-lg cursor-pointer"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         <span>New Application</span>
@@ -815,10 +1407,14 @@ export default function App() {
                             }
                           })();
 
+                          const isOpenInDesk = openSessions.some(
+                            (s) => s.kind === 'case' && s.applicationId === app.id
+                          );
+
                           return (
                             <tr
                               key={app.id}
-                              onClick={() => setSelectedAppId(app.id)}
+                              onClick={() => openCaseSession(app.id)}
                               className="hover:bg-amber-50/35 cursor-pointer transition-colors"
                             >
                               <td className="py-3.5 px-4 font-mono font-semibold text-slate-900 whitespace-nowrap">
@@ -854,11 +1450,15 @@ export default function App() {
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setSelectedAppId(app.id);
+                                    openCaseSession(app.id);
                                   }}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[#8C5E12] bg-amber-50/80 hover:bg-amber-100/80 border border-amber-200/80 rounded-md transition-colors cursor-pointer"
+                                  className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer border ${
+                                    isOpenInDesk
+                                      ? 'text-slate-900 bg-slate-100 border-slate-300 hover:bg-slate-200'
+                                      : 'text-[#8C5E12] bg-amber-50/80 hover:bg-amber-100/80 border-amber-200/80'
+                                  }`}
                                 >
-                                  <span>{rowActionLabel}</span>
+                                  <span>{isOpenInDesk ? 'In Desk' : rowActionLabel}</span>
                                   <ArrowUpRight className="w-3 h-3" />
                                 </button>
                               </td>
@@ -871,52 +1471,106 @@ export default function App() {
                 )}
               </motion.div>
             </div>
+              )}
+            </>
           )}
         </main>
       </div>
 
-      {/* Floating Priority Case Quick-Jump Dock on Pipeline View */}
-      {!isCustomerMode && !selectedApplication && section === 'queue' && urgentPipelineCase && (
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-          className="floating-dock fixed bottom-5 right-6 z-30 rounded-xl px-4 py-3 flex items-center gap-4 text-white no-print"
-        >
-          <div className="text-xs">
-            <div className="text-[11px] text-[#E6BF6F] font-medium">
-              Action Needed Now · {urgentPipelineCase.applicationNumber}
-            </div>
-            <div className="font-medium text-white truncate max-w-[240px]">
-              {urgentPipelineCase.customer.fullName} ({urgentPipelineCase.status})
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSelectedAppId(urgentPipelineCase.id)}
-            className="btn-bullion inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg whitespace-nowrap cursor-pointer"
-          >
-            <span>Open Case</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </button>
-        </motion.div>
+      {/* Asynchronous Background Task Completion Notices */}
+      {asyncNotices.length > 0 && (
+        <div className="fixed top-20 right-6 z-40 space-y-2 max-w-sm w-full no-print">
+          {asyncNotices.map((notice) => (
+            <motion.div
+              key={notice.id}
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="floating-dock rounded-xl p-3.5 text-white flex items-start justify-between gap-3"
+            >
+              <div className="flex items-start gap-2.5 min-w-0">
+                {notice.tone === 'err' ? (
+                  <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 text-[#E6BF6F] shrink-0 mt-0.5" />
+                )}
+                <div className="text-xs min-w-0">
+                  <div className="font-semibold text-white truncate">{notice.title}</div>
+                  <div className="text-[11px] text-slate-300 mt-0.5">{notice.detail}</div>
+                  {notice.targetSessionId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetId = notice.targetSessionId!;
+                        setSection('queue');
+                        if (openSessions.some((s) => s.id === targetId)) {
+                          setActiveSessionId(targetId);
+                        } else if (targetId.startsWith('case-')) {
+                          openCaseSession(targetId.slice(5));
+                        } else {
+                          setActiveSessionId(null);
+                        }
+                        setAsyncNotices((prev) => prev.filter((n) => n.id !== notice.id));
+                      }}
+                      className="mt-1.5 text-[11px] font-medium text-[#E6BF6F] hover:underline cursor-pointer"
+                    >
+                      Open Customer Tab →
+                    </button>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setAsyncNotices((prev) => prev.filter((n) => n.id !== notice.id))
+                }
+                className="text-slate-400 hover:text-white p-0.5 cursor-pointer"
+                aria-label="Dismiss notification"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </motion.div>
+          ))}
+        </div>
       )}
 
-      {intakeOpen && currentUser && (
-        <ApplicationIntakeModal
-          staffId={currentUser.id}
-          existingApp={editingApp}
-          onClose={() => {
-            setIntakeOpen(false);
-            setEditingApp(null);
-          }}
-          onSuccess={(app, auditEntry) => {
-            handleApplicationUpdated(app, auditEntry as AuditLogEntry);
-            setIntakeOpen(false);
-            setEditingApp(null);
-            setSelectedAppId(app.id);
-            setSection('queue');
-          }}
+      {/* Floating Priority Case Quick-Jump Dock on Pipeline View */}
+      {!isCustomerMode &&
+        !activeSession &&
+        section === 'queue' &&
+        urgentPipelineCase && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="floating-dock fixed bottom-5 right-6 z-30 rounded-xl px-4 py-3 flex items-center gap-4 text-white no-print"
+          >
+            <div className="text-xs">
+              <div className="text-[11px] text-[#E6BF6F] font-medium">
+                Action Needed Now · {urgentPipelineCase.applicationNumber}
+              </div>
+              <div className="font-medium text-white truncate max-w-[240px]">
+                {urgentPipelineCase.customer.fullName} ({urgentPipelineCase.status})
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => openCaseSession(urgentPipelineCase.id)}
+              className="btn-bullion inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg whitespace-nowrap cursor-pointer"
+            >
+              <span>Open Case</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </motion.div>
+        )}
+
+      {pendingRoleSwitchId && staffDirectory.length > 0 && (
+        <RoleLoginModal
+          targetStaffId={pendingRoleSwitchId}
+          staffDirectory={staffDirectory}
+          roleLabels={ROLE_LABELS}
+          onClose={() => setPendingRoleSwitchId(null)}
+          onAuthenticated={completeRoleSwitch}
         />
       )}
     </div>

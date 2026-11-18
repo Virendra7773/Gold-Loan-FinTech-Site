@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Upload,
   UserCheck,
+  UserPlus,
   X,
 } from 'lucide-react';
 import type {
@@ -69,6 +70,7 @@ interface ApplicationWorkspaceProps {
   staffDirectory: StaffUser[];
   policy: LendingPolicy;
   auditLogs: AuditLogEntry[];
+  isActiveSession?: boolean;
   onApplicationUpdated: (
     app: GoldLoanApplication,
     auditEntry: AuditLogEntry,
@@ -76,6 +78,8 @@ interface ApplicationWorkspaceProps {
   ) => void;
   onEditIntake: (app: GoldLoanApplication) => void;
   onSwitchStaffRole?: (staffId: string) => void;
+  onAsyncActivityChange?: (applicationId: string, label: string | null) => void;
+  onStartAnotherWalkIn?: () => void;
 }
 
 interface AppraisalDraftItem {
@@ -94,9 +98,12 @@ export function ApplicationWorkspace({
   staffDirectory,
   policy,
   auditLogs,
+  isActiveSession = true,
   onApplicationUpdated,
   onEditIntake,
   onSwitchStaffRole,
+  onAsyncActivityChange,
+  onStartAnotherWalkIn,
 }: ApplicationWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(() =>
     stageToTab(application.status)
@@ -158,7 +165,7 @@ export function ApplicationWorkspace({
     application.disbursement.remarks ?? ''
   );
 
-  // Sync local form state when switching applications
+  // Sync local form state when switching applications or when server persists an update
   useEffect(() => {
     setActionError(null);
     setActionSuccess(null);
@@ -209,7 +216,7 @@ export function ApplicationWorkspace({
     );
     setUtrReference(application.disbursement.utrReference ?? '');
     setDisbursementRemarks(application.disbursement.remarks ?? '');
-  }, [application, policy.maxLtvPercent]);
+  }, [application.id, application.updatedAt, policy.maxLtvPercent]);
 
   const totalAppraisedValue = useMemo(() => {
     return application.goldItems.reduce((sum, item) => sum + (item.appraisedValue ?? 0), 0);
@@ -251,6 +258,7 @@ export function ApplicationWorkspace({
     setActionError(null);
     setActionSuccess(null);
     setBusy(true);
+    onAsyncActivityChange?.(application.id, 'Saving...');
     try {
       const res = await fn();
       onApplicationUpdated(res.application, res.auditEntry, res.branchWallet);
@@ -259,6 +267,7 @@ export function ApplicationWorkspace({
       setActionError(err instanceof Error ? err.message : 'Action failed.');
     } finally {
       setBusy(false);
+      onAsyncActivityChange?.(application.id, null);
     }
   }
 
@@ -478,7 +487,17 @@ export function ApplicationWorkspace({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {isStaffOrAdmin && onStartAnotherWalkIn && (
+              <button
+                type="button"
+                onClick={onStartAnotherWalkIn}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-800 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg whitespace-nowrap cursor-pointer"
+              >
+                <UserPlus className="w-3.5 h-3.5 text-[#9A6B16]" />
+                <span>Next Walk-In</span>
+              </button>
+            )}
             {canEditIntake && (
               <button
                 type="button"
@@ -2495,8 +2514,8 @@ export function ApplicationWorkspace({
         </motion.div>
       )}
 
-      {/* Floating Next-Step Action Dock (Bottom-Right) */}
-      {((nextActionGuide && !isAuditor) || isDualSigned) && (
+      {/* Floating Next-Step Action Dock (Bottom-Right, active tab only) */}
+      {isActiveSession && ((nextActionGuide && !isAuditor) || isDualSigned) && (
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

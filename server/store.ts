@@ -38,6 +38,10 @@ export const STAFF_DIRECTORY: StaffUser[] = [
     employeeCode: 'AV-MUM-104',
     branchCode: 'MUM-04',
     branchName: 'Mumbai — Bandra West Branch',
+    demoCredentials: {
+      loginId: 'priya.staff@aurelia.in',
+      password: 'Staff@2026',
+    },
   },
   {
     id: 'appraiser-01',
@@ -47,6 +51,10 @@ export const STAFF_DIRECTORY: StaffUser[] = [
     employeeCode: 'AV-APP-208',
     branchCode: 'MUM-04',
     branchName: 'Mumbai — Bandra West Branch',
+    demoCredentials: {
+      loginId: 'rajesh.appraiser@aurelia.in',
+      password: 'Assay@2026',
+    },
   },
   {
     id: 'admin-01',
@@ -56,6 +64,10 @@ export const STAFF_DIRECTORY: StaffUser[] = [
     employeeCode: 'AV-ADM-019',
     branchCode: 'MUM-04',
     branchName: 'Mumbai — Bandra West Branch',
+    demoCredentials: {
+      loginId: 'vikram.admin@aurelia.in',
+      password: 'Admin@2026',
+    },
   },
   {
     id: 'auditor-01',
@@ -65,6 +77,10 @@ export const STAFF_DIRECTORY: StaffUser[] = [
     employeeCode: 'AV-AUD-007',
     branchCode: 'HQ-AUDIT',
     branchName: 'Central Risk & Audit Cell',
+    demoCredentials: {
+      loginId: 'meera.auditor@aurelia.in',
+      password: 'Audit@2026',
+    },
   },
   {
     id: 'customer-01',
@@ -75,8 +91,32 @@ export const STAFF_DIRECTORY: StaffUser[] = [
     branchCode: 'MUM-04',
     branchName: 'Mumbai — Bandra West Branch',
     linkedCustomerName: 'Ananya Deshpande',
+    demoCredentials: {
+      loginId: 'ananya.customer@aurelia.in',
+      password: 'Loan@2026',
+    },
   },
 ];
+
+export function authenticateRoleSwitch(
+  staffId: string,
+  loginId: string,
+  password: string
+): StaffUser {
+  const user = STAFF_DIRECTORY.find((s) => s.id === staffId);
+  if (!user || !user.demoCredentials) {
+    throw new Error('Target role account not found.');
+  }
+  const normalizedInputId = loginId.trim().toLowerCase();
+  const validIds = [
+    user.demoCredentials.loginId.toLowerCase(),
+    user.employeeCode.toLowerCase(),
+  ];
+  if (!validIds.includes(normalizedInputId) || password !== user.demoCredentials.password) {
+    throw new Error('Invalid Login ID or password for the selected role.');
+  }
+  return user;
+}
 
 interface StoredApplicationRecord {
   application: GoldLoanApplication;
@@ -1002,7 +1042,7 @@ function saveDatabase(db: PersistedDatabase): void {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
-  const tmpFile = `${DB_FILE}.tmp`;
+  const tmpFile = `${DB_FILE}.${process.pid}.${Date.now()}.tmp`;
   fs.writeFileSync(tmpFile, JSON.stringify(db, null, 2));
   fs.renameSync(tmpFile, DB_FILE);
 }
@@ -1224,9 +1264,15 @@ export function createNewApplication(
 } {
   const db = loadDatabase();
   const now = new Date().toISOString();
-  const seq = 845 + db.applications.length;
-  const id = `GL-2026-0${seq}`;
-  const applicationNumber = `AVGL-MUM04-0${seq}`;
+  const maxSeq = db.applications.reduce((max, r) => {
+    const m = r.application.id.match(/(\d+)$/);
+    const num = m ? Number(m[1]) : 0;
+    return Number.isFinite(num) && num > max ? num : max;
+  }, 844);
+  const seq = maxSeq + 1;
+  const paddedSeq = String(seq).padStart(4, '0');
+  const id = `GL-2026-${paddedSeq}`;
+  const applicationNumber = `AVGL-MUM04-${paddedSeq}`;
 
   const rawAadhaarDigits = payload.customer.aadhaarNumberOrLast4.replace(/\D/g, '');
   const aadhaarLast4 = rawAadhaarDigits.slice(-4).padStart(4, 'X');

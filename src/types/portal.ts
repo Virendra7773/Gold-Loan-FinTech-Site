@@ -14,6 +14,10 @@ export interface StaffUser {
   branchCode: string;
   branchName: string;
   linkedCustomerName?: string;
+  demoCredentials?: {
+    loginId: string;
+    password: string;
+  };
 }
 
 export type ApplicationStatus =
