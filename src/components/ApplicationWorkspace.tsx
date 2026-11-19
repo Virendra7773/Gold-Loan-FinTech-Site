@@ -959,10 +959,12 @@ export function ApplicationWorkspace({
                       </div>
                       <p className="text-slate-600">{item.customerDescription}</p>
                       <p className="text-[11px] text-slate-500">
-                        Purchase Bill:{' '}
-                        {item.purchaseBillAvailable
-                          ? `Available (${item.purchaseBillRef || 'Attached'})`
-                          : 'Not Available'}
+                        Provenance:{' '}
+                        {item.provenanceType === 'generational'
+                          ? `Generational (${item.generationalRelation || 'Family Heirloom'} · ${item.hallmarkStatus || 'Unhallmarked'})`
+                          : item.purchaseBillAvailable
+                            ? `Bill Verified (${item.purchaseBillRef || 'Attached'})`
+                            : 'Not Available'}
                       </p>
                     </div>
                     {(draft?.supportingPhotoDataUrl || item.supportingPhotoDataUrl) && (

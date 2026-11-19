@@ -48,19 +48,39 @@ async function requestJson<T>(
 }
 
 export const portalApi = {
+  fetchStaffDirectory() {
+    return requestJson<{ staffDirectory: StaffUser[] }>('/api/staff', 'staff-01');
+  },
+
   bootstrap(staffId: string) {
     return requestJson<BootstrapResponse>('/api/bootstrap', staffId);
   },
 
-  loginRole(payload: { staffId: string; loginId: string; password: string }) {
+  loginRole(payload: { staffId?: string; loginId: string; password: string }) {
     return requestJson<{ user: StaffUser; auditEntry: AuditLogEntry }>(
       '/api/auth/login',
-      payload.staffId,
+      payload.staffId || 'staff-01',
       {
         method: 'POST',
         body: JSON.stringify(payload),
       }
     );
+  },
+
+  registerCustomer(payload: {
+    fullName: string;
+    phone: string;
+    loginId: string;
+    password: string;
+  }) {
+    return requestJson<{
+      user: StaffUser;
+      staffDirectory: StaffUser[];
+      auditEntry: AuditLogEntry;
+    }>('/api/auth/register', 'customer-01', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
 
   extractOcr(

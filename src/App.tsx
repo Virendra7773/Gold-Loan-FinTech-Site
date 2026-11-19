@@ -10,6 +10,8 @@ import {
   Landmark,
   Layers,
   Loader2,
+  LogOut,
+  Menu,
   Plus,
   Scale,
   Search,
@@ -43,6 +45,7 @@ import { BranchWalletView } from './components/BranchWalletView.tsx';
 import { ComplianceAuditView } from './components/ComplianceAuditView.tsx';
 import { CustomerIntakeWorkspace } from './components/CustomerIntakeWorkspace.tsx';
 import { CustomerPortalView } from './components/CustomerPortalView.tsx';
+import { HomeAuthView } from './components/HomeAuthView.tsx';
 import { RoleLoginModal } from './components/RoleLoginModal.tsx';
 import { StatusText } from './components/StatusText.tsx';
 
@@ -58,6 +61,7 @@ const ROLE_LABELS: Record<StaffRole, string> = {
 };
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [staffId, setStaffId] = useState<string>('staff-01');
   const [staffDirectory, setStaffDirectory] = useState<StaffUser[]>([]);
   const [currentUser, setCurrentUser] = useState<StaffUser | null>(null);
@@ -80,11 +84,17 @@ export default function App() {
   const [caseAsyncLabels, setCaseAsyncLabels] = useState<Record<string, string | null>>({});
   const [asyncNotices, setAsyncNotices] = useState<AsyncNotice[]>([]);
   const [pendingRoleSwitchId, setPendingRoleSwitchId] = useState<string | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  // Customer Self-Service Application Draft State
+  const [customerDraftId, setCustomerDraftId] = useState<string | null>(null);
+  const [customerPreferredAppId, setCustomerPreferredAppId] = useState<string | null>(null);
 
   const walkInSeqRef = useRef(0);
   const activeSessionIdRef = useRef<string | null>(null);
   const intakeDraftsRef = useRef<Record<string, IntakeDraftState>>({});
   const staffIdRef = useRef(staffId);
+  const customerDraftIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     activeSessionIdRef.current = activeSessionId;
@@ -97,6 +107,10 @@ export default function App() {
   useEffect(() => {
     staffIdRef.current = staffId;
   }, [staffId]);
+
+  useEffect(() => {
+    customerDraftIdRef.current = customerDraftId;
+  }, [customerDraftId]);
 
   const loadPortalData = useCallback(async (activeStaffId: string) => {
     setLoading(true);
@@ -117,8 +131,16 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    portalApi
+      .fetchStaffDirectory()
+      .then((res) => setStaffDirectory(res.staffDirectory))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
     loadPortalData(staffId);
-  }, [staffId, loadPortalData]);
+  }, [isAuthenticated, staffId, loadPortalData]);
 
   const activeSession = useMemo(() => {
     return openSessions.find((s) => s.id === activeSessionId) ?? null;
@@ -301,6 +323,47 @@ export default function App() {
     });
   }, []);
 
+  const openCustomerApplyDraft = useCallback(() => {
+    if (!currentUser) return;
+    walkInSeqRef.current += 1;
+    const draft = createIntakeDraft(walkInSeqRef.current, null, {
+      fullName: currentUser.name,
+      phone: currentUser.phone ?? '',
+      label: currentUser.name,
+    });
+    setIntakeDrafts((prev) => {
+      const next = { ...prev, [draft.draftId]: draft };
+      intakeDraftsRef.current = next;
+      return next;
+    });
+    setCustomerDraftId(draft.draftId);
+    customerDraftIdRef.current = draft.draftId;
+  }, [currentUser]);
+
+  const openCustomerEditDraft = useCallback((app: GoldLoanApplication) => {
+    const draft = createIntakeDraft(0, app);
+    setIntakeDrafts((prev) => {
+      const next = { ...prev, [draft.draftId]: draft };
+      intakeDraftsRef.current = next;
+      return next;
+    });
+    setCustomerDraftId(draft.draftId);
+    customerDraftIdRef.current = draft.draftId;
+  }, []);
+
+  const closeCustomerDraft = useCallback((draftId: string) => {
+    setCustomerDraftId((prev) => (prev === draftId ? null : prev));
+    if (customerDraftIdRef.current === draftId) {
+      customerDraftIdRef.current = null;
+    }
+    setIntakeDrafts((prev) => {
+      const copy = { ...prev };
+      delete copy[draftId];
+      intakeDraftsRef.current = copy;
+      return copy;
+    });
+  }, []);
+
   // Asynchronous background demo OCR runner per customer draft
   const runDraftOcr = useCallback(
     async (
@@ -439,14 +502,19 @@ export default function App() {
       }
       if (
         submitForKyc &&
-        draft.goldItems.some(
-          (g) => !g.purchaseBillAvailable || !g.purchaseBillRef?.trim() || !g.purchaseBillImageUrl
-        )
+        draft.goldItems.some((g) => {
+          if (g.provenanceType === 'generational') {
+            return !g.generationalDeclarationAccepted || !g.generationalRelation?.trim();
+          }
+          return (
+            !g.purchaseBillAvailable || !g.purchaseBillRef?.trim() || !g.purchaseBillImageUrl
+          );
+        })
       ) {
         patchDraft(draftId, {
           currentStep: 3,
           formError:
-            'Original Gold Bill (invoice number and bill scan) is mandatory for every pledged ornament.',
+            'Each ornament requires either an Original Gold Bill (invoice # + scan) OR a signed Generational Gold Ownership Declaration.',
         });
         return;
       }
@@ -504,17 +572,24 @@ export default function App() {
         const savedApp = res.application;
         handleApplicationUpdated(savedApp, res.auditEntry, res.branchWallet);
         const caseSessionId = `case-${savedApp.id}`;
+        const isCustomerSubmission = customerDraftIdRef.current === draftId;
 
-        setOpenSessions((prev) => {
-          const withoutDuplicateCase = prev.filter(
-            (s) => s.id === draftId || s.id !== caseSessionId
-          );
-          return withoutDuplicateCase.map((s) =>
-            s.id === draftId
-              ? ({ id: caseSessionId, kind: 'case', applicationId: savedApp.id } as DeskSession)
-              : s
-          );
-        });
+        if (isCustomerSubmission) {
+          setCustomerDraftId(null);
+          customerDraftIdRef.current = null;
+          setCustomerPreferredAppId(savedApp.id);
+        } else {
+          setOpenSessions((prev) => {
+            const withoutDuplicateCase = prev.filter(
+              (s) => s.id === draftId || s.id !== caseSessionId
+            );
+            return withoutDuplicateCase.map((s) =>
+              s.id === draftId
+                ? ({ id: caseSessionId, kind: 'case', applicationId: savedApp.id } as DeskSession)
+                : s
+            );
+          });
+        }
 
         setIntakeDrafts((prev) => {
           const copy = { ...prev };
@@ -523,7 +598,7 @@ export default function App() {
           return copy;
         });
 
-        if (activeSessionIdRef.current === draftId) {
+        if (!isCustomerSubmission && activeSessionIdRef.current === draftId) {
           setActiveSessionId(caseSessionId);
           setSection('queue');
         }
@@ -535,13 +610,15 @@ export default function App() {
           title: `${savedApp.applicationNumber} · ${savedApp.customer.fullName}`,
           detail: submitForKyc
             ? 'Submitted for Branch Admin KYC review.'
-            : 'Saved as Draft in pipeline.',
-          targetSessionId: caseSessionId,
+            : isCustomerSubmission
+              ? 'Saved as Draft in your Loan Portal.'
+              : 'Saved as Draft in pipeline.',
+          targetSessionId: isCustomerSubmission ? undefined : caseSessionId,
         });
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unable to save application.';
         patchDraft(draftId, { submitting: false, formError: message });
-        if (activeSessionIdRef.current !== draftId) {
+        if (activeSessionIdRef.current !== draftId && customerDraftIdRef.current !== draftId) {
           pushNotice({
             tone: 'err',
             title: `Submission Failed · ${draft.fullName || draft.label}`,
@@ -556,12 +633,17 @@ export default function App() {
 
   function requestRoleSwitch(nextStaffId: string) {
     if (nextStaffId === staffId) return;
+    setMobileNavOpen(false);
     setPendingRoleSwitchId(nextStaffId);
   }
 
   function completeRoleSwitch(verifiedUser: StaffUser) {
     setStaffId(verifiedUser.id);
     setPendingRoleSwitchId(null);
+    setMobileNavOpen(false);
+    setCustomerDraftId(null);
+    customerDraftIdRef.current = null;
+    setCustomerPreferredAppId(null);
     if (verifiedUser.role === 'CUSTOMER') {
       setActiveSessionId(null);
       setSection('queue');
@@ -576,6 +658,8 @@ export default function App() {
   }
 
   const isCustomerMode = currentUser?.role === 'CUSTOMER';
+  const activeCustomerDraft =
+    isCustomerMode && customerDraftId ? intakeDrafts[customerDraftId] ?? null : null;
   const canCreateApplication =
     currentUser?.role === 'BRANCH_STAFF' || currentUser?.role === 'BRANCH_ADMIN';
   const canViewWallet =
@@ -609,12 +693,47 @@ export default function App() {
     return null;
   }, [applications, currentUser]);
 
+  if (!isAuthenticated) {
+    return (
+      <HomeAuthView
+        staffDirectory={staffDirectory}
+        roleLabels={ROLE_LABELS}
+        onAuthenticated={(user, updatedDirectory) => {
+          if (updatedDirectory) {
+            setStaffDirectory(updatedDirectory);
+          }
+          setStaffId(user.id);
+          setIsAuthenticated(true);
+          setActiveSessionId(null);
+          setCustomerDraftId(null);
+          customerDraftIdRef.current = null;
+          setCustomerPreferredAppId(null);
+          setMobileNavOpen(false);
+          setSection('queue');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex text-slate-900">
-      {/* Deep Obsidian Sidebar */}
-      <aside className="w-68 shrink-0 bg-[#0B111E] text-slate-100 flex flex-col justify-between border-r border-slate-800/90 no-print">
+      {/* Mobile Sidebar Backdrop */}
+      {mobileNavOpen && (
+        <div
+          onClick={() => setMobileNavOpen(false)}
+          className="fixed inset-0 z-30 bg-slate-950/60 lg:hidden no-print"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Deep Obsidian Sidebar (Fixed Drawer on Mobile, Persistent Column on Desktop) */}
+      <aside
+        className={`${
+          mobileNavOpen ? 'fixed inset-y-0 left-0 z-40 flex' : 'hidden'
+        } lg:flex lg:static w-68 shrink-0 bg-[#0B111E] text-slate-100 flex-col justify-between border-r border-slate-800/90 overflow-y-auto no-print`}
+      >
         <div className="p-5 space-y-6">
-          <div className="pb-4 border-b border-slate-800/80">
+          <div className="pb-4 border-b border-slate-800/80 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4A94B] to-[#9A6B16] flex items-center justify-center shadow-sm">
                 <Landmark className="w-4 h-4 text-slate-950" aria-hidden="true" />
@@ -630,6 +749,14 @@ export default function App() {
                 </span>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(false)}
+              className="lg:hidden p-1.5 text-slate-400 hover:text-white rounded-lg cursor-pointer"
+              aria-label="Close navigation menu"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
           {!isCustomerMode ? (
@@ -640,6 +767,7 @@ export default function App() {
                   onClick={() => {
                     setSection('queue');
                     setActiveSessionId(null);
+                    setMobileNavOpen(false);
                   }}
                   className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
                     section === 'queue' && !activeSessionId
@@ -657,6 +785,7 @@ export default function App() {
                     onClick={() => {
                       setSection('wallet');
                       setActiveSessionId(null);
+                      setMobileNavOpen(false);
                     }}
                     className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
                       section === 'wallet'
@@ -674,6 +803,7 @@ export default function App() {
                   onClick={() => {
                     setSection('compliance');
                     setActiveSessionId(null);
+                    setMobileNavOpen(false);
                   }}
                   className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
                     section === 'compliance'
@@ -698,6 +828,7 @@ export default function App() {
                       setSection('queue');
                       setActiveSessionId(null);
                       setQueueFilter('KYC');
+                      setMobileNavOpen(false);
                     }}
                     className="w-full flex items-center justify-between px-3 py-2 text-slate-300 hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
                   >
@@ -716,6 +847,7 @@ export default function App() {
                       setSection('queue');
                       setActiveSessionId(null);
                       setQueueFilter('APPRAISAL');
+                      setMobileNavOpen(false);
                     }}
                     className="w-full flex items-center justify-between px-3 py-2 text-slate-300 hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
                   >
@@ -775,19 +907,54 @@ export default function App() {
               );
             })}
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setIsAuthenticated(false);
+              setMobileNavOpen(false);
+              setActiveSessionId(null);
+              setCustomerDraftId(null);
+              customerDraftIdRef.current = null;
+              setCustomerPreferredAppId(null);
+              setSection('queue');
+            }}
+            className="w-full mt-2 px-3 py-2 rounded-lg border border-slate-800 bg-white/5 hover:bg-white/10 text-xs text-slate-300 hover:text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5 text-[#D4A94B]" />
+            <span>Home &amp; Sign Out</span>
+          </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Clean 3-Zone Top Bar */}
-        <header className="h-16 bg-white/85 backdrop-blur-md border-b border-slate-200/80 px-6 flex items-center justify-between gap-8 sticky top-0 z-20 no-print">
+        <header className="h-16 bg-white/85 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between gap-4 sm:gap-8 sticky top-0 z-20 no-print">
           {/* Zone 1: Context Wordmark / Breadcrumb */}
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen(true)}
+              className="lg:hidden p-2 -ml-1 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg cursor-pointer shrink-0"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
             {isCustomerMode ? (
-              <h1 className="text-base font-semibold text-slate-900 whitespace-nowrap shrink-0">
-                Customer Loan Portal
-              </h1>
+              activeCustomerDraft ? (
+                <button
+                  type="button"
+                  onClick={() => closeCustomerDraft(activeCustomerDraft.draftId)}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-900 hover:text-[#9A6B16] whitespace-nowrap shrink-0 cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>My Loan Portal / Apply</span>
+                </button>
+              ) : (
+                <h1 className="text-base font-semibold text-slate-900 whitespace-nowrap shrink-0">
+                  Customer Loan Portal
+                </h1>
+              )
             ) : activeSession?.kind === 'intake' ? (
               <button
                 type="button"
@@ -915,7 +1082,7 @@ export default function App() {
         </header>
 
         {/* Viewport Container */}
-        <main className="flex-1 p-6 pb-24 max-w-[1360px] w-full mx-auto space-y-5">
+        <main className="flex-1 px-4 py-5 sm:p-6 pb-24 max-w-[1360px] w-full mx-auto space-y-5">
           {/* Concurrent Multi-Customer Active Desk Bar */}
           {!isCustomerMode && openSessions.length > 0 && !loadError && currentUser && (
             <div className="vault-card rounded-xl px-3 py-2 flex items-center justify-between gap-3 no-print">
@@ -1092,12 +1259,28 @@ export default function App() {
               <div className="h-80 bg-white border border-slate-200 rounded-xl animate-pulse" />
             </div>
           ) : isCustomerMode && currentUser ? (
-            <CustomerPortalView
-              currentUser={currentUser}
-              applications={applications}
-              policy={policy}
-              onApplicationUpdated={handleApplicationUpdated}
-            />
+            activeCustomerDraft ? (
+              <CustomerIntakeWorkspace
+                draft={activeCustomerDraft}
+                isActiveSession
+                isCustomerSelfService
+                onPatchDraft={patchDraft}
+                onRunOcr={runDraftOcr}
+                onSubmitDraft={submitDraft}
+                onStartAnotherWalkIn={openCustomerApplyDraft}
+                onCloseDraft={closeCustomerDraft}
+              />
+            ) : (
+              <CustomerPortalView
+                currentUser={currentUser}
+                applications={applications}
+                policy={policy}
+                preferredAppId={customerPreferredAppId}
+                onApplyForLoan={openCustomerApplyDraft}
+                onEditApplication={openCustomerEditDraft}
+                onApplicationUpdated={handleApplicationUpdated}
+              />
+            )
           ) : section === 'wallet' && branchWallet ? (
             <BranchWalletView
               wallet={branchWallet}

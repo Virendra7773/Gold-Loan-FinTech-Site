@@ -584,6 +584,18 @@
   ],
   "auditLogs": [
     {
+      "id": "AUD-DC2EB232",
+      "applicationId": "ROLE-AUTH",
+      "applicationNumber": "AV-MUM-104",
+      "timestamp": "2026-11-19T05:45:07.985Z",
+      "actorId": "staff-01",
+      "actorName": "Priya Sharma",
+      "actorRole": "BRANCH_STAFF",
+      "action": "Role Sign-In Verified (BRANCH_STAFF)",
+      "details": "Priya Sharma (AV-MUM-104) authenticated via sign-in portal.",
+      "integrityHash": "1a6cb3d6b86e60d5"
+    },
+    {
       "id": "AUD-B33F0BCE",
       "applicationId": "GL-2026-0841",
       "applicationNumber": "AVGL-MUM04-0841",

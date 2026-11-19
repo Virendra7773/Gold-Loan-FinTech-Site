@@ -17,7 +17,13 @@ import {
   X,
 } from 'lucide-react';
 import type { IntakeDraftState, IntakeStep, OcrInputSource } from '../types/desk.ts';
-import type { GoldItem, KycDocumentAttachment, OrnamentType } from '../types/portal.ts';
+import type {
+  GoldItem,
+  HallmarkStatus,
+  KycDocumentAttachment,
+  OrnamentProvenance,
+  OrnamentType,
+} from '../types/portal.ts';
 import { maskAadhaarInput } from '../utils/loanMath.ts';
 import { CameraModal } from './CameraModal.tsx';
 import { OrnamentPhoto } from './OrnamentPhoto.tsx';
@@ -25,6 +31,7 @@ import { OrnamentPhoto } from './OrnamentPhoto.tsx';
 interface CustomerIntakeWorkspaceProps {
   draft: IntakeDraftState;
   isActiveSession: boolean;
+  isCustomerSelfService?: boolean;
   onPatchDraft: (
     draftId: string,
     updater: Partial<IntakeDraftState> | ((prev: IntakeDraftState) => IntakeDraftState)
@@ -111,6 +118,7 @@ function buildSampleGoldBillDataUrl(ornamentType: OrnamentType, invoiceNo: strin
 export function CustomerIntakeWorkspace({
   draft,
   isActiveSession,
+  isCustomerSelfService = false,
   onPatchDraft,
   onRunOcr,
   onSubmitDraft,
@@ -203,6 +211,17 @@ export function CustomerIntakeWorkspace({
     }
   }
 
+  function isOrnamentProvenanceReady(item: GoldItem): boolean {
+    if (item.provenanceType === 'generational') {
+      return Boolean(item.generationalDeclarationAccepted && item.generationalRelation?.trim());
+    }
+    return (
+      item.purchaseBillAvailable &&
+      Boolean(item.purchaseBillRef?.trim()) &&
+      Boolean(item.purchaseBillImageUrl)
+    );
+  }
+
   function addOrnamentRow() {
     const nextIndex = draft.goldItems.length;
     onPatchDraft(draft.draftId, (prev) => ({
@@ -215,6 +234,8 @@ export function CustomerIntakeWorkspace({
           quantity: 1,
           customerDescription: '',
           livePhotoDataUrl: '',
+          provenanceType: 'bill',
+          hallmarkStatus: 'BIS Hallmarked',
           purchaseBillAvailable: true,
         },
       ],
@@ -245,6 +266,7 @@ export function CustomerIntakeWorkspace({
       reader.readAsDataURL(file);
     });
     updateOrnament(itemId, {
+      provenanceType: 'bill',
       purchaseBillAvailable: true,
       purchaseBillImageUrl: dataUrl,
       purchaseBillRef: file.name,
@@ -262,11 +284,7 @@ export function CustomerIntakeWorkspace({
       Boolean(draft.panNumber.trim()) &&
       draft.consentCaptured,
     3: draft.goldItems.every(
-      (g) =>
-        Boolean(g.customerDescription.trim()) &&
-        g.purchaseBillAvailable &&
-        Boolean(g.purchaseBillRef?.trim()) &&
-        Boolean(g.purchaseBillImageUrl)
+      (g) => Boolean(g.customerDescription.trim()) && isOrnamentProvenanceReady(g)
     ),
     4:
       Boolean(draft.bankName.trim()) &&
@@ -287,20 +305,32 @@ export function CustomerIntakeWorkspace({
           <div className="space-y-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
               <span className="font-mono font-semibold text-[#9A6B16]">
-                {isEditing ? `Update Intake · ${draft.existingAppNumber}` : draft.label}
+                {isEditing
+                  ? `Update Intake · ${draft.existingAppNumber}`
+                  : isCustomerSelfService
+                    ? 'Customer Self-Application'
+                    : draft.label}
               </span>
               <span aria-hidden="true">·</span>
               <span>Page {currentStep} of 4</span>
               <span aria-hidden="true">·</span>
-              <span>Auto-saved across concurrent customer tabs</span>
+              <span>
+                {isCustomerSelfService
+                  ? 'Reviewed by Branch Admin upon submission'
+                  : 'Auto-saved across concurrent customer tabs'}
+              </span>
             </div>
             <h2 className="text-xl font-semibold text-slate-900 truncate">
-              {isEditing ? `Editing ${displayTitle}` : `Customer Intake — ${displayTitle}`}
+              {isEditing
+                ? `Editing ${displayTitle}`
+                : isCustomerSelfService
+                  ? `Gold Loan Application — ${displayTitle}`
+                  : `Customer Intake — ${displayTitle}`}
             </h2>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            {!isEditing && (
+            {!isEditing && !isCustomerSelfService && (
               <button
                 type="button"
                 onClick={onStartAnotherWalkIn}
@@ -315,8 +345,17 @@ export function CustomerIntakeWorkspace({
               onClick={() => onCloseDraft(draft.draftId)}
               className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 rounded-lg whitespace-nowrap shrink-0 cursor-pointer"
             >
-              <X className="w-3.5 h-3.5" />
-              <span>Discard Tab</span>
+              {isCustomerSelfService ? (
+                <>
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back to Portal</span>
+                </>
+              ) : (
+                <>
+                  <X className="w-3.5 h-3.5" />
+                  <span>Discard Tab</span>
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -776,10 +815,15 @@ export function CustomerIntakeWorkspace({
             <div className="flex flex-wrap items-center gap-1.5">
               {draft.goldItems.map((itm, idx) => {
                 const isSelected = idx === activeOrnamentIndex;
-                const hasBill =
-                  itm.purchaseBillAvailable &&
-                  Boolean(itm.purchaseBillRef?.trim()) &&
-                  Boolean(itm.purchaseBillImageUrl);
+                const provenanceReady = isOrnamentProvenanceReady(itm);
+                const statusTag =
+                  itm.provenanceType === 'generational'
+                    ? provenanceReady
+                      ? ' · Generational OK'
+                      : ' · Decl Pending'
+                    : provenanceReady
+                      ? ' · Bill OK'
+                      : ' · Bill Missing';
                 return (
                   <button
                     key={itm.id}
@@ -792,7 +836,7 @@ export function CustomerIntakeWorkspace({
                     }`}
                   >
                     #{idx + 1} · {itm.itemType}
-                    {hasBill ? ' · Bill OK' : ' · Bill Missing'}
+                    {statusTag}
                   </button>
                 );
               })}
@@ -893,11 +937,26 @@ export function CustomerIntakeWorkspace({
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">
-                    Original Gold Bill *
+                    Provenance / Gold Bill *
                   </label>
-                  <div className="px-3 py-2 text-xs font-medium rounded-lg border border-amber-300 bg-amber-50/70 text-amber-950">
-                    Mandatory for Loan
-                  </div>
+                  <select
+                    value={activeOrnament.provenanceType ?? 'bill'}
+                    onChange={(e) => {
+                      const nextProv = e.target.value as OrnamentProvenance;
+                      updateOrnament(activeOrnament.id, {
+                        provenanceType: nextProv,
+                        purchaseBillAvailable: nextProv === 'bill',
+                        hallmarkStatus:
+                          nextProv === 'generational'
+                            ? 'Unhallmarked (Generational / Legacy)'
+                            : 'BIS Hallmarked',
+                      });
+                    }}
+                    className="w-full px-3 py-2 text-xs font-medium bg-white border border-slate-300 rounded-lg"
+                  >
+                    <option value="bill">Original Gold Bill</option>
+                    <option value="generational">Generational (No Bill / No Hallmark)</option>
+                  </select>
                 </div>
 
                 <div className="sm:col-span-3">
@@ -915,97 +974,180 @@ export function CustomerIntakeWorkspace({
                   />
                 </div>
 
-                <div className="sm:col-span-3 p-3.5 bg-white border border-slate-200 rounded-lg space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-slate-900">
-                      Gold Purchase Bill Invoice &amp; Scan (Mandatory) *
-                    </span>
-                    <span
-                      className={`text-[11px] font-medium ${
-                        activeOrnament.purchaseBillRef?.trim() &&
-                        activeOrnament.purchaseBillImageUrl
-                          ? 'text-emerald-700'
-                          : 'text-amber-800'
-                      }`}
-                    >
-                      {activeOrnament.purchaseBillRef?.trim() &&
-                      activeOrnament.purchaseBillImageUrl
-                        ? 'Gold Bill Attached'
-                        : 'Invoice # and Bill Scan Required'}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <input
-                      type="text"
-                      value={activeOrnament.purchaseBillRef ?? ''}
-                      onChange={(e) =>
-                        updateOrnament(activeOrnament.id, {
-                          purchaseBillAvailable: true,
-                          purchaseBillRef: e.target.value,
-                        })
-                      }
-                      placeholder="Jeweller Invoice / Gold Bill # *"
-                      className="flex-1 min-w-[200px] px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-lg"
-                    />
-                    <label className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-800 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer whitespace-nowrap">
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>
-                        {activeOrnament.purchaseBillImageUrl
-                          ? 'Replace Gold Bill Scan'
-                          : 'Upload Gold Bill *'}
+                {activeOrnament.provenanceType === 'generational' ? (
+                  <div className="sm:col-span-3 p-4 bg-white border border-amber-200 rounded-lg space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-slate-900">
+                        Generational / Inherited Gold Declaration (No Bill &amp; No Hallmark Allowed)
                       </span>
-                      <input
-                        type="file"
-                        accept="image/*,application/pdf"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) handlePurchaseBillUpload(activeOrnament.id, f);
-                          e.target.value = '';
-                        }}
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const inv =
-                          activeOrnament.purchaseBillRef?.trim() ||
-                          `TBZ-MUM-${2024 + activeOrnamentIndex}-${1040 + activeOrnamentIndex}`;
-                        updateOrnament(activeOrnament.id, {
-                          purchaseBillAvailable: true,
-                          purchaseBillRef: inv,
-                          purchaseBillImageUrl: buildSampleGoldBillDataUrl(
-                            activeOrnament.itemType,
-                            inv
-                          ),
-                        });
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#8C5E12] bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-lg whitespace-nowrap cursor-pointer"
-                    >
-                      <FileScan className="w-3.5 h-3.5" />
-                      <span>Sample Gold Bill (Demo)</span>
-                    </button>
-                  </div>
+                      <span
+                        className={`text-[11px] font-medium ${
+                          isOrnamentProvenanceReady(activeOrnament)
+                            ? 'text-emerald-700'
+                            : 'text-amber-800'
+                        }`}
+                      >
+                        {isOrnamentProvenanceReady(activeOrnament)
+                          ? 'Declaration Complete · Queued for XRF Assay'
+                          : 'Origin & Ownership Declaration Required'}
+                      </span>
+                    </div>
 
-                  {activeOrnament.purchaseBillImageUrl && (
-                    <div className="flex items-center gap-3 pt-1 text-xs">
-                      <img
-                        src={activeOrnament.purchaseBillImageUrl}
-                        alt="Gold purchase bill preview"
-                        className="w-16 h-11 object-cover rounded border border-slate-200 bg-slate-50 shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <div className="font-mono font-medium text-slate-900 truncate">
-                          Bill Ref: {activeOrnament.purchaseBillRef || 'Attached'}
-                        </div>
-                        <div className="text-[11px] text-emerald-700">
-                          Original jeweller bill scan verified for intake
-                        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 mb-1">
+                          Hallmark Status
+                        </label>
+                        <select
+                          value={
+                            activeOrnament.hallmarkStatus ?? 'Unhallmarked (Generational / Legacy)'
+                          }
+                          onChange={(e) =>
+                            updateOrnament(activeOrnament.id, {
+                              hallmarkStatus: e.target.value as HallmarkStatus,
+                            })
+                          }
+                          className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg"
+                        >
+                          <option value="Unhallmarked (Generational / Legacy)">
+                            Unhallmarked (Pre-BIS / Heirloom)
+                          </option>
+                          <option value="BIS Hallmarked">Legacy Hallmark Present</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-slate-700 mb-1">
+                          Generational / Family Source *
+                        </label>
+                        <input
+                          type="text"
+                          value={activeOrnament.generationalRelation ?? ''}
+                          onChange={(e) =>
+                            updateOrnament(activeOrnament.id, {
+                              generationalRelation: e.target.value,
+                            })
+                          }
+                          placeholder="e.g., Inherited Maternal Family Heirloom (1994)"
+                          className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg"
+                        />
                       </div>
                     </div>
-                  )}
-                </div>
+
+                    <label className="flex items-start gap-2.5 text-xs text-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(activeOrnament.generationalDeclarationAccepted)}
+                        onChange={(e) =>
+                          updateOrnament(activeOrnament.id, {
+                            generationalDeclarationAccepted: e.target.checked,
+                          })
+                        }
+                        className="mt-0.5 rounded border-slate-300 text-amber-700"
+                      />
+                      <span>
+                        <strong className="text-slate-900">
+                          Self-Declaration &amp; Indemnity Accepted:
+                        </strong>{' '}
+                        Customer declares lawful, unencumbered family ownership without an original bill or BIS hallmark and consents to mandatory XRF/touchstone purity verification during Appraisal.
+                      </span>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="sm:col-span-3 p-3.5 bg-white border border-slate-200 rounded-lg space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-slate-900">
+                        Gold Purchase Bill Invoice &amp; Scan (Mandatory for Billed Gold) *
+                      </span>
+                      <span
+                        className={`text-[11px] font-medium ${
+                          activeOrnament.purchaseBillRef?.trim() &&
+                          activeOrnament.purchaseBillImageUrl
+                            ? 'text-emerald-700'
+                            : 'text-amber-800'
+                        }`}
+                      >
+                        {activeOrnament.purchaseBillRef?.trim() &&
+                        activeOrnament.purchaseBillImageUrl
+                          ? 'Gold Bill Attached'
+                          : 'Invoice # and Bill Scan Required'}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <input
+                        type="text"
+                        value={activeOrnament.purchaseBillRef ?? ''}
+                        onChange={(e) =>
+                          updateOrnament(activeOrnament.id, {
+                            provenanceType: 'bill',
+                            purchaseBillAvailable: true,
+                            purchaseBillRef: e.target.value,
+                          })
+                        }
+                        placeholder="Jeweller Invoice / Gold Bill # *"
+                        className="flex-1 min-w-[200px] px-3 py-2 text-xs font-mono bg-white border border-slate-300 rounded-lg"
+                      />
+                      <label className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-800 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 cursor-pointer whitespace-nowrap">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>
+                          {activeOrnament.purchaseBillImageUrl
+                            ? 'Replace Gold Bill Scan'
+                            : 'Upload Gold Bill *'}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handlePurchaseBillUpload(activeOrnament.id, f);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const inv =
+                            activeOrnament.purchaseBillRef?.trim() ||
+                            `TBZ-MUM-${2024 + activeOrnamentIndex}-${1040 + activeOrnamentIndex}`;
+                          updateOrnament(activeOrnament.id, {
+                            provenanceType: 'bill',
+                            purchaseBillAvailable: true,
+                            purchaseBillRef: inv,
+                            purchaseBillImageUrl: buildSampleGoldBillDataUrl(
+                              activeOrnament.itemType,
+                              inv
+                            ),
+                          });
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#8C5E12] bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-lg whitespace-nowrap cursor-pointer"
+                      >
+                        <FileScan className="w-3.5 h-3.5" />
+                        <span>Sample Gold Bill (Demo)</span>
+                      </button>
+                    </div>
+
+                    {activeOrnament.purchaseBillImageUrl && (
+                      <div className="flex items-center gap-3 pt-1 text-xs">
+                        <img
+                          src={activeOrnament.purchaseBillImageUrl}
+                          alt="Gold purchase bill preview"
+                          className="w-16 h-11 object-cover rounded border border-slate-200 bg-slate-50 shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <div className="font-mono font-medium text-slate-900 truncate">
+                            Bill Ref: {activeOrnament.purchaseBillRef || 'Attached'}
+                          </div>
+                          <div className="text-[11px] text-emerald-700">
+                            Original jeweller bill scan verified for intake
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1164,15 +1306,8 @@ export function CustomerIntakeWorkspace({
                 <div className="font-medium text-slate-900 tabular-nums">
                   {draft.goldItems.length} item(s) ·{' '}
                   {draft.goldItems.filter((g) => g.livePhotoDataUrl).length} photo(s) ·{' '}
-                  {
-                    draft.goldItems.filter(
-                      (g) =>
-                        g.purchaseBillAvailable &&
-                        Boolean(g.purchaseBillRef?.trim()) &&
-                        Boolean(g.purchaseBillImageUrl)
-                    ).length
-                  }
-                  /{draft.goldItems.length} gold bill(s)
+                  {draft.goldItems.filter((g) => isOrnamentProvenanceReady(g)).length}/
+                  {draft.goldItems.length} provenance ready
                 </div>
               </div>
             </div>

@@ -19,10 +19,12 @@ import {
   appendStandaloneAuditLog,
   authenticateRoleSwitch,
   createNewApplication,
+  getAllStaffUsers,
   getBootstrapData,
   getPolicy,
   getStaffById,
   mutateApplication,
+  registerCustomerAccount,
   updateRecordEncryptedFields,
 } from './server/store.ts';
 
@@ -62,7 +64,7 @@ async function startServer() {
 
   // Staff & Bootstrap
   app.get('/api/staff', (_req, res) => {
-    res.json({ staffDirectory: STAFF_DIRECTORY });
+    res.json({ staffDirectory: getAllStaffUsers() });
   });
 
   app.post('/api/auth/login', (req, res) => {
@@ -72,8 +74,8 @@ async function startServer() {
         loginId?: string;
         password?: string;
       };
-      if (!staffId || !loginId || !password) {
-        res.status(400).json({ error: 'Role, Login ID, and Password are required.' });
+      if (!loginId || !password) {
+        res.status(400).json({ error: 'Login ID and Password are required.' });
         return;
       }
       const user = authenticateRoleSwitch(staffId, loginId, password);
@@ -82,7 +84,7 @@ async function startServer() {
         applicationNumber: user.employeeCode,
         actor: user,
         action: `Role Sign-In Verified (${user.role})`,
-        details: `${user.name} (${user.employeeCode}) authenticated via role login interface.`,
+        details: `${user.name} (${user.employeeCode}) authenticated via sign-in portal.`,
       });
       res.json({ user, auditEntry });
     } catch (err) {
@@ -92,16 +94,43 @@ async function startServer() {
     }
   });
 
+  app.post('/api/auth/register', (req, res) => {
+    try {
+      const { fullName, phone, loginId, password } = req.body as {
+        fullName?: string;
+        phone?: string;
+        loginId?: string;
+        password?: string;
+      };
+      if (!fullName?.trim() || !phone?.trim() || !loginId?.trim() || !password?.trim()) {
+        res.status(400).json({
+          error: 'Full name, mobile number, login ID, and password are required.',
+        });
+        return;
+      }
+      if (password.trim().length < 6) {
+        res.status(400).json({ error: 'Password must be at least 6 characters.' });
+        return;
+      }
+      const result = registerCustomerAccount({ fullName, phone, loginId, password });
+      res.status(201).json(result);
+    } catch (err) {
+      res.status(400).json({
+        error: err instanceof Error ? err.message : 'Registration failed.',
+      });
+    }
+  });
+
   app.get('/api/bootstrap', attachStaffUser, (req: AuthenticatedRequest, res) => {
     const data = getBootstrapData(req.staffUser!);
     res.json(data);
   });
 
-  // Instant Demo KYC OCR Assist (Branch Staff / Branch Admin)
+  // Instant Demo KYC OCR Assist (Branch Staff / Branch Admin / Customer Self-Service)
   app.post(
     '/api/ocr/extract',
     attachStaffUser,
-    requireRoles(['BRANCH_STAFF', 'BRANCH_ADMIN']),
+    requireRoles(['BRANCH_STAFF', 'BRANCH_ADMIN', 'CUSTOMER']),
     async (req: AuthenticatedRequest, res) => {
       try {
         const {
@@ -151,11 +180,11 @@ async function startServer() {
     }
   );
 
-  // Create Customer Application (Branch Staff / Branch Admin)
+  // Create Customer Application (Branch Staff / Branch Admin / Customer Self-Service)
   app.post(
     '/api/applications',
     attachStaffUser,
-    requireRoles(['BRANCH_STAFF', 'BRANCH_ADMIN']),
+    requireRoles(['BRANCH_STAFF', 'BRANCH_ADMIN', 'CUSTOMER']),
     (req: AuthenticatedRequest, res) => {
       try {
         const body = req.body;
@@ -175,15 +204,20 @@ async function startServer() {
             res.status(400).json({ error: 'At least one gold ornament must be pledged.' });
             return;
           }
-          const missingBill = items.some(
-            (item) =>
+          const missingProvenance = items.some((item) => {
+            if (item.provenanceType === 'generational') {
+              return !item.generationalDeclarationAccepted || !item.generationalRelation?.trim();
+            }
+            return (
               !item.purchaseBillAvailable ||
               !item.purchaseBillRef?.trim() ||
               !item.purchaseBillImageUrl
-          );
-          if (missingBill) {
+            );
+          });
+          if (missingProvenance) {
             res.status(400).json({
-              error: 'Original Gold Bill (invoice reference number and bill scan) is mandatory for every pledged ornament.',
+              error:
+                'Each ornament requires either an Original Gold Bill (invoice # + bill scan) OR a signed Generational Gold Ownership Declaration.',
             });
             return;
           }
@@ -196,11 +230,11 @@ async function startServer() {
     }
   );
 
-  // Update Intake / Resubmit after More Info Requested (Branch Staff / Branch Admin)
+  // Update Intake / Resubmit after More Info Requested (Branch Staff / Branch Admin / Customer owner)
   app.patch(
     '/api/applications/:id/intake',
     attachStaffUser,
-    requireRoles(['BRANCH_STAFF', 'BRANCH_ADMIN']),
+    requireRoles(['BRANCH_STAFF', 'BRANCH_ADMIN', 'CUSTOMER']),
     (req: AuthenticatedRequest, res) => {
       try {
         const id = String(req.params.id);
@@ -227,6 +261,15 @@ async function startServer() {
         };
 
         const updated = mutateApplication(id, req.staffUser!, (app, record) => {
+          if (req.staffUser?.role === 'CUSTOMER') {
+            const linkedName = req.staffUser.linkedCustomerName?.trim().toLowerCase();
+            const isOwner =
+              app.createdById === req.staffUser.id ||
+              (Boolean(linkedName) && app.customer.fullName.trim().toLowerCase() === linkedName);
+            if (!isOwner) {
+              throw new Error('You can only edit your own loan application.');
+            }
+          }
           const allowedStatuses: ApplicationStatus[] = ['Draft', 'KYC Info Required', 'KYC Pending'];
           if (!allowedStatuses.includes(app.status)) {
             throw new Error(`Cannot edit intake while status is ${app.status}.`);
@@ -280,15 +323,19 @@ async function startServer() {
             if (app.goldItems.length === 0) {
               throw new Error('At least one gold ornament must be captured.');
             }
-            const missingBill = app.goldItems.some(
-              (item) =>
+            const missingProvenance = app.goldItems.some((item) => {
+              if (item.provenanceType === 'generational') {
+                return !item.generationalDeclarationAccepted || !item.generationalRelation?.trim();
+              }
+              return (
                 !item.purchaseBillAvailable ||
                 !item.purchaseBillRef?.trim() ||
                 !item.purchaseBillImageUrl
-            );
-            if (missingBill) {
+              );
+            });
+            if (missingProvenance) {
               throw new Error(
-                'Original Gold Bill (invoice reference number and bill scan) is mandatory for every pledged ornament.'
+                'Each ornament requires either an Original Gold Bill (invoice # + bill scan) OR a signed Generational Gold Ownership Declaration.'
               );
             }
             app.status = 'KYC Pending';

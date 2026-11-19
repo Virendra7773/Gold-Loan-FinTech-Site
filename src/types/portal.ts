@@ -13,6 +13,7 @@ export interface StaffUser {
   employeeCode: string;
   branchCode: string;
   branchName: string;
+  phone?: string;
   linkedCustomerName?: string;
   demoCredentials?: {
     loginId: string;
@@ -57,15 +58,22 @@ export type OrnamentType =
   | 'Coin'
   | 'Other';
 
+export type OrnamentProvenance = 'bill' | 'generational';
+export type HallmarkStatus = 'BIS Hallmarked' | 'Unhallmarked (Generational / Legacy)';
+
 export interface GoldItem {
   id: string;
   itemType: OrnamentType;
   quantity: number;
   customerDescription: string;
   livePhotoDataUrl: string;
+  provenanceType?: OrnamentProvenance;
+  hallmarkStatus?: HallmarkStatus;
   purchaseBillAvailable: boolean;
   purchaseBillRef?: string;
   purchaseBillImageUrl?: string;
+  generationalRelation?: string;
+  generationalDeclarationAccepted?: boolean;
   grossWeightGrams?: number;
   stoneDetails?: string;
   stoneDeductionGrams?: number;

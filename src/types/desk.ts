@@ -59,21 +59,27 @@ export interface AsyncNotice {
 
 export function createIntakeDraft(
   walkInNumber: number,
-  existingApp?: GoldLoanApplication | null
+  existingApp?: GoldLoanApplication | null,
+  customerDefaults?: { fullName?: string; phone?: string; label?: string }
 ): IntakeDraftState {
   const draftId = existingApp
     ? `intake-edit-${existingApp.id}`
     : `intake-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`;
 
+  const prefilledName = existingApp?.customer.fullName ?? customerDefaults?.fullName ?? '';
+  const prefilledPhone = existingApp?.customer.phone ?? customerDefaults?.phone ?? '';
+
   return {
     draftId,
-    label: existingApp ? `Edit · ${existingApp.customer.fullName}` : `Walk-In #${walkInNumber}`,
+    label: existingApp
+      ? `Edit · ${existingApp.customer.fullName}`
+      : customerDefaults?.label ?? `Walk-In #${walkInNumber}`,
     createdAt: new Date().toISOString(),
     currentStep: 1,
     existingAppId: existingApp?.id,
     existingAppNumber: existingApp?.applicationNumber,
-    fullName: existingApp?.customer.fullName ?? '',
-    phone: existingApp?.customer.phone ?? '',
+    fullName: prefilledName,
+    phone: prefilledPhone,
     dateOfBirth: existingApp?.customer.dateOfBirth ?? '',
     address: existingApp?.customer.address ?? '',
     panNumber: existingApp?.customer.panNumber ?? '',
@@ -91,10 +97,12 @@ export function createIntakeDraft(
         quantity: 1,
         customerDescription: '',
         livePhotoDataUrl: '',
+        provenanceType: 'bill',
+        hallmarkStatus: 'BIS Hallmarked',
         purchaseBillAvailable: true,
       },
     ],
-    accountHolderName: existingApp?.bankAccount.accountHolderName ?? '',
+    accountHolderName: existingApp?.bankAccount.accountHolderName ?? prefilledName,
     bankName: existingApp?.bankAccount.bankName ?? '',
     ifscCode: existingApp?.bankAccount.ifscCode ?? '',
     accountNumber: existingApp?.bankAccount.accountNumberLast4

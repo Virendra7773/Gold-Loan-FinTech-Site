@@ -90,6 +90,7 @@ export const STAFF_DIRECTORY: StaffUser[] = [
     employeeCode: 'CUST-MUM-0841',
     branchCode: 'MUM-04',
     branchName: 'Mumbai — Bandra West Branch',
+    phone: '+91 98204 71209',
     linkedCustomerName: 'Ananya Deshpande',
     demoCredentials: {
       loginId: 'ananya.customer@aurelia.in',
@@ -98,24 +99,98 @@ export const STAFF_DIRECTORY: StaffUser[] = [
   },
 ];
 
+export function getAllStaffUsers(db?: PersistedDatabase): StaffUser[] {
+  const activeDb = db ?? loadDatabase();
+  const customUsers = Array.isArray(activeDb.registeredUsers) ? activeDb.registeredUsers : [];
+  return [...STAFF_DIRECTORY, ...customUsers];
+}
+
 export function authenticateRoleSwitch(
-  staffId: string,
+  staffId: string | undefined,
   loginId: string,
   password: string
 ): StaffUser {
-  const user = STAFF_DIRECTORY.find((s) => s.id === staffId);
-  if (!user || !user.demoCredentials) {
-    throw new Error('Target role account not found.');
-  }
+  const allUsers = getAllStaffUsers();
   const normalizedInputId = loginId.trim().toLowerCase();
+
+  const user = staffId
+    ? allUsers.find((s) => s.id === staffId)
+    : allUsers.find(
+        (s) =>
+          s.demoCredentials?.loginId.toLowerCase() === normalizedInputId ||
+          s.employeeCode.toLowerCase() === normalizedInputId
+      );
+
+  if (!user || !user.demoCredentials) {
+    throw new Error('No account found matching this Login ID.');
+  }
+
   const validIds = [
     user.demoCredentials.loginId.toLowerCase(),
     user.employeeCode.toLowerCase(),
   ];
   if (!validIds.includes(normalizedInputId) || password !== user.demoCredentials.password) {
-    throw new Error('Invalid Login ID or password for the selected role.');
+    throw new Error('Invalid Login ID or password.');
   }
   return user;
+}
+
+export function registerCustomerAccount(params: {
+  fullName: string;
+  phone: string;
+  loginId: string;
+  password: string;
+}): { user: StaffUser; staffDirectory: StaffUser[]; auditEntry: AuditLogEntry } {
+  const db = loadDatabase();
+  if (!Array.isArray(db.registeredUsers)) {
+    db.registeredUsers = [];
+  }
+
+  const normalizedLogin = params.loginId.trim().toLowerCase();
+  const allUsers = [...STAFF_DIRECTORY, ...db.registeredUsers];
+  const exists = allUsers.some(
+    (u) =>
+      u.demoCredentials?.loginId.toLowerCase() === normalizedLogin ||
+      u.employeeCode.toLowerCase() === normalizedLogin
+  );
+  if (exists) {
+    throw new Error('An account with this Login ID / Email already exists.');
+  }
+
+  const seq = 900 + db.registeredUsers.length + 1;
+  const newUser: StaffUser = {
+    id: `customer-reg-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+    name: params.fullName.trim(),
+    role: 'CUSTOMER',
+    designation: 'Borrower Self-Service Portal',
+    employeeCode: `CUST-MUM-${seq}`,
+    branchCode: 'MUM-04',
+    branchName: 'Mumbai — Bandra West Branch',
+    phone: params.phone.trim(),
+    linkedCustomerName: params.fullName.trim(),
+    demoCredentials: {
+      loginId: params.loginId.trim(),
+      password: params.password,
+    },
+  };
+
+  db.registeredUsers.push(newUser);
+  const auditEntry = makeAudit({
+    applicationId: 'ROLE-AUTH',
+    applicationNumber: newUser.employeeCode,
+    timestamp: new Date().toISOString(),
+    actor: newUser,
+    action: 'New Customer Account Registered',
+    details: `Borrower ${newUser.name} (${newUser.demoCredentials?.loginId}, Phone ${params.phone.trim()}) created a self-service portal account.`,
+  });
+  db.auditLogs.unshift(auditEntry);
+  saveDatabase(db);
+
+  return {
+    user: newUser,
+    staffDirectory: [...STAFF_DIRECTORY, ...db.registeredUsers],
+    auditEntry,
+  };
 }
 
 interface StoredApplicationRecord {
@@ -129,6 +204,7 @@ interface PersistedDatabase {
   policy: LendingPolicy;
   applications: StoredApplicationRecord[];
   auditLogs: AuditLogEntry[];
+  registeredUsers?: StaffUser[];
 }
 
 function makeSampleDocSvg(params: {
@@ -1048,7 +1124,8 @@ function saveDatabase(db: PersistedDatabase): void {
 }
 
 export function getStaffById(staffId: string | undefined): StaffUser | undefined {
-  return STAFF_DIRECTORY.find((s) => s.id === staffId);
+  if (!staffId) return undefined;
+  return getAllStaffUsers().find((s) => s.id === staffId);
 }
 
 export function computeBranchWalletSummary(db: PersistedDatabase): BranchWalletSummary {
@@ -1176,7 +1253,7 @@ export function projectApplicationForRole(
 export function getBootstrapData(actor: StaffUser) {
   const db = loadDatabase();
   return {
-    staffDirectory: STAFF_DIRECTORY,
+    staffDirectory: getAllStaffUsers(db),
     currentUser: actor,
     policy: db.policy,
     applications: db.applications.map((r) => projectApplicationForRole(r, actor.role)),
